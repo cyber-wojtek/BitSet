@@ -14,8 +14,7 @@ Note: This project aims to be the most efficient and performant, prioritizing pe
 
 The documentation for this project can be found in the following locations:
 
-- API Reference/Usage Examples
-- Tutorial
+- [API Reference/Usage Examples](https://cyber-wojtek.github.io/index.html)
 
 ## Contributing
 
