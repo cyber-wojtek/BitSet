@@ -26,7 +26,7 @@ public:
      * @param size Size of the bitset to be created (in bits)
      * @param list Initializer list to fill the bitset with, must contain *chunks* not bits
 	 */
-    DynamicBitSet(const uint64_t& size, const std::initializer_list<T> list) : data(new T[size / chunk_size + (size % chunk_size ? 1 : 0)]), size(size), storage_size(size / chunk_size + (size % chunk_size ? 1 : 0))
+    DynamicBitSet(const uint64_t& size, const std::initializer_list<T> list) : data(new T[calculateStorageSize(size)]), size(size), storage_size(calculateStorageSize(size))
     {
         std::copy(list.begin(), list.end(), data);
     }
@@ -149,21 +149,21 @@ public:
     }
 
     /**
+	 * Sets the bit at the specified index to 1 (true)
+	 * @param index Index of the bit to set (bit index)
+	 */
+    void setBit(const uint64_t& index)
+    {
+        *(data + index / chunk_size) |= static_cast<T>(1) << index % chunk_size;
+    }
+
+    /**
      * Sets the bit at the specified index to 0 (false)
-     * @param index Index of the bit to set (bit index)
+     * @param index Index of the bit to clear (bit index)
      */
     void clearBit(const uint64_t& index)
     {
         *(data + index / chunk_size) &= ~(static_cast<T>(1) << index % chunk_size);
-    }
-
-    /**
-     * Sets the bit at the specified index to 1 (true)
-     * @param index Index of the bit to set (bit index)
-     */
-    void setBit(const uint64_t& index)
-    {
-        *(data + index / chunk_size) |= static_cast<T>(1) << index % chunk_size;
     }
 
     /**
@@ -176,7 +176,7 @@ public:
     }
 
     /**
-     * Fills all the bits with 0 (false)
+     * Clears all the bits (sets all bits to 0)
      */
     void clearAll()
     {
@@ -735,9 +735,9 @@ public:
     }
 
     /**
-     * Retrieves the value of the bit at the specified index
-     * @param index Index of the bit to retrieve (bit index)
-     * @return Bit value at the specified index
+     * Retrieves the value of a bit at a specified index
+     * @param index The index of the bit to read (bit index)
+     * @return The value of the bit at the specified index
      */
     [[nodiscard]] bool getBit(const uint64_t& index) const
     {
@@ -947,12 +947,49 @@ public:
         // else throw error in safe version
     }
 
+    void resize(const uint64_t& new_size)
+	{
+		if (new_size == size)
+			return;
+		if (new_size < size)
+		{
+			size = new_size;
+			storage_size = calculateStorageSize(size);
+			return;
+		}
+		const uint64_t new_storage_size = calculateStorageSize(new_size);
+		T* new_data = new T[new_storage_size];
+		if (data)
+		{
+			std::copy(data, data + storage_size, new_data);
+			delete[] data;
+		}
+		data = new_data;
+		storage_size = new_storage_size;
+		size = new_size;
+	}
+
+    void reserve(const uint64_t& new_size)
+	{
+		if (new_size <= size)
+			return;
+		const uint64_t new_storage_size = calculateStorageSize(new_size);
+		T* new_data = new T[new_storage_size];
+		if (data)
+		{
+			std::copy(data, data + storage_size, new_data);
+			delete[] data;
+		}
+		data = new_data;
+		storage_size = new_storage_size;
+	}
+
     /**
      * Returns the number of chunks the bitset would utilize for given size
      * @param size Size of the target bitset in bits
      * @return The number of chunks the bitset would utilize for the given size
      */
-    [[nodiscard]] static constexpr uint64_t calculateStorageSize(const uint64_t& size)
+    [[nodiscard]] inline static constexpr uint64_t calculateStorageSize(const uint64_t& size)
     {
         return size / (sizeof(T) * 8) + (size % (sizeof(T) * 8) ? 1 : 0);
     }
@@ -973,7 +1010,7 @@ public:
 };
 
 // Fixed-size bitset
-template <UnsignedInteger T, uint64_t fixed_size>
+template <UnsignedInteger T, uint64_t Size>
 class BitSet
 {
 public:
@@ -1674,7 +1711,6 @@ public:
     [[nodiscard]] T& getChunk(const uint64_t& index)
     {
         return data[index];
-        0b00000000;
     }
 
     /**
@@ -1785,7 +1821,7 @@ public:
      * @param size Size of the target bitset in bits
      * @return The number of chunks the bitset would utilize for the given size
      */
-    [[nodiscard]] static constexpr uint64_t calculateStorageSize(const uint64_t& size = fixed_size)
+    [[nodiscard]] static constexpr uint64_t calculateStorageSize(const uint64_t& size = Size)
     {
         return size / (sizeof(T) * 8) + (size % (sizeof(T) * 8) ? 1 : 0);
     }
@@ -1793,14 +1829,14 @@ public:
     // Notice that neither of the following data members are private, that is done intentionally to allow for direct access to the underlying array.
 
     // Underlying array of bits
-    alignas(std::hardware_destructive_interference_size) T data[fixed_size];
+    alignas(std::hardware_destructive_interference_size) T data[Size];
 
     // Size of the bitset in bits
-    static constexpr uint64_t size = fixed_size;
+    static constexpr uint64_t size = Size;
 
     // Bit-length of the underlying type
     static constexpr uint16_t chunk_size = sizeof(T) * 8;
 
     // Amount of chunks the bitset is utilizing
-    static constexpr uint64_t storage_size = fixed_size / chunk_size + (fixed_size % chunk_size ? 1 : 0);
+    static constexpr uint64_t storage_size = Size / chunk_size + (Size % chunk_size ? 1 : 0);
 };
