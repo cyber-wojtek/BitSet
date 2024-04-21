@@ -947,7 +947,11 @@ public:
         // else throw error in safe version
     }
 
-    void resize(const uint64_t& new_size)
+	/**
+	 * Resizes the bitset to the specified size
+	 * @param new_size The new size of the bitset (bit size)
+	 */
+	void resize(const uint64_t& new_size)
 	{
 		if (new_size == size)
 			return;
@@ -969,11 +973,15 @@ public:
 		size = new_size;
 	}
 
-    void reserve(const uint64_t& new_size)
+	/**
+	 * Reserves the specified size for the bitset
+	 * @param reserve_size The size to reserve for the bitset (bit size)
+	 */
+	void reserve(const uint64_t& reserve_size)
 	{
-		if (new_size <= size)
+		if (reserve_size <= size)
 			return;
-		const uint64_t new_storage_size = calculateStorageSize(new_size);
+		const uint64_t new_storage_size = calculateStorageSize(reserve_size);
 		T* new_data = new T[new_storage_size];
 		if (data)
 		{
@@ -994,19 +1002,25 @@ public:
         return size / (sizeof(T) * 8) + (size % (sizeof(T) * 8) ? 1 : 0);
     }
 
-    // Notice that neither of the following data members are private, that is done intentionally to allow for direct access to the underlying array.
+	/**
+	 * Underlying array of chunks containing the bits
+	 */
+	alignas(std::hardware_destructive_interference_size) T* data;
 
-    // Underlying array of bits
-    alignas(std::hardware_destructive_interference_size) T* data;
+	/**
+	 * Size of the bitset in bits
+	 */
+	uint64_t size;
 
-    // Size of the bitset in bits
-    uint64_t size;
+	/**
+	 * Amount of chunks the bitset is utilizing
+	 */
+	uint64_t storage_size;
 
-    // Amount of chunks the bitset is utilizing
-    uint64_t storage_size;
-
-    // Bit-length of the underlying type
-    static constexpr uint16_t chunk_size = sizeof(T) * 8;
+	/**
+	 * Bit-length of the underlying type
+	 */
+	static constexpr uint16_t chunk_size = sizeof(T) * 8;
 };
 
 // Fixed-size bitset
@@ -1826,17 +1840,23 @@ public:
         return size / (sizeof(T) * 8) + (size % (sizeof(T) * 8) ? 1 : 0);
     }
 
-    // Notice that neither of the following data members are private, that is done intentionally to allow for direct access to the underlying array.
-
-    // Underlying array of bits
+    /**
+     * Underlying array of chunks containing the bits
+     */
     alignas(std::hardware_destructive_interference_size) T data[Size];
 
-    // Size of the bitset in bits
+    /**
+     * Size of the bitset in bits
+     */
     static constexpr uint64_t size = Size;
 
-    // Bit-length of the underlying type
+    /**
+     * Bit-length of the underlying type
+     */
     static constexpr uint16_t chunk_size = sizeof(T) * 8;
 
-    // Amount of chunks the bitset is utilizing
+    /**
+     * Amount of chunks the bitset is utilizing
+     */
     static constexpr uint64_t storage_size = Size / chunk_size + (Size % chunk_size ? 1 : 0);
 };
