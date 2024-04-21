@@ -1,0 +1,927 @@
+\doxysection{Dynamic\+Bit\+Set\texorpdfstring{$<$}{<} T \texorpdfstring{$>$}{>} Class Template Reference}
+\hypertarget{class_dynamic_bit_set}{}\label{class_dynamic_bit_set}\index{DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}}
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{class_dynamic_bit_set_ac197902df4f2dc60991add9c414ca281}{Dynamic\+Bit\+Set}} ()
+\item 
+\mbox{\hyperlink{class_dynamic_bit_set_a6178d45e8d685eb1266c6dbbef0ac19e}{Dynamic\+Bit\+Set}} (const uint64\+\_\+t \&\mbox{\hyperlink{class_dynamic_bit_set_a12d63eae79f9dc133c7b4e9edbcc88aa}{size}}, const std\+::initializer\+\_\+list$<$ T $>$ list)
+\item 
+\mbox{\hyperlink{class_dynamic_bit_set_a5f85b23a6fa4b8167179c60a8ecfaf4e}{Dynamic\+Bit\+Set}} (const std\+::initializer\+\_\+list$<$ T $>$ list)
+\item 
+\mbox{\hyperlink{class_dynamic_bit_set_aa4013d37448be14135dba3df8ae072f2}{Dynamic\+Bit\+Set}} (const uint64\+\_\+t \&\mbox{\hyperlink{class_dynamic_bit_set_a12d63eae79f9dc133c7b4e9edbcc88aa}{size}})
+\item 
+\mbox{\hyperlink{class_dynamic_bit_set_a9531005b1585be4a252ad8b83384db99}{Dynamic\+Bit\+Set}} (const uint64\+\_\+t \&\mbox{\hyperlink{class_dynamic_bit_set_a12d63eae79f9dc133c7b4e9edbcc88aa}{size}}, const bool \&value)
+\item 
+\mbox{\hyperlink{class_dynamic_bit_set_ae1948947a4be122a903b92c15be3ee30}{Dynamic\+Bit\+Set}} (const \mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}} \&other)
+\item 
+\mbox{\hyperlink{class_dynamic_bit_set_a308c92cc7cda0c2eb80b6294285681c2}{Dynamic\+Bit\+Set}} (\mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}} \&\&other) noexcept
+\item 
+\mbox{\hyperlink{class_dynamic_bit_set_a128288c5529076ef9c7cc7e215c929f9}{\texorpdfstring{$\sim$}{\string~}\+Dynamic\+Bit\+Set}} ()
+\item 
+bool \mbox{\hyperlink{class_dynamic_bit_set_a173ec7469892d66ca7fb65deb6b57336}{operator\mbox{[}$\,$\mbox{]}}} (const uint64\+\_\+t \&index) const
+\item 
+\mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}} \& \mbox{\hyperlink{class_dynamic_bit_set_aac3314a08fb144a19d4de45c4a072774}{operator=}} (const \mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}} \&other)
+\item 
+\mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}} \& \mbox{\hyperlink{class_dynamic_bit_set_a99538ddf4c464f9b8f22b82c09df34d8}{operator=}} (\mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}} \&\&other) noexcept
+\item 
+void \mbox{\hyperlink{class_dynamic_bit_set_a9cda8c683d5e82b7d1ebc68f2e38e087}{set\+Bit}} (const bool \&value, const uint64\+\_\+t \&index)
+\item 
+void \mbox{\hyperlink{class_dynamic_bit_set_ac5be0ec473058776299d068eaaa65ad5}{set\+Bit}} (const uint64\+\_\+t \&index)
+\item 
+void \mbox{\hyperlink{class_dynamic_bit_set_ace80324881807d8b68137900f83239ab}{clear\+Bit}} (const uint64\+\_\+t \&index)
+\item 
+void \mbox{\hyperlink{class_dynamic_bit_set_a9e05f156a63466b10edce1ee834541b2}{fill\+All}} (const bool \&value)
+\item 
+void \mbox{\hyperlink{class_dynamic_bit_set_ab4e059f8ebe1269907d09f786d2d82fd}{clear\+All}} ()
+\item 
+void \mbox{\hyperlink{class_dynamic_bit_set_a68d38a3bdfa2ecbf6b643d95a4a91a72}{set\+All}} ()
+\item 
+void \mbox{\hyperlink{class_dynamic_bit_set_afbb90ffb5ad6e87098cd5f1c1f23a1ce}{fill\+In\+Range}} (const bool \&value, const uint64\+\_\+t \&end)
+\item 
+void \mbox{\hyperlink{class_dynamic_bit_set_abff8e27831681d5503ce4f9a71478797}{clear\+In\+Range}} (const uint64\+\_\+t \&end)
+\item 
+void \mbox{\hyperlink{class_dynamic_bit_set_a89e605f9daf28db918cec3db475a42f4}{set\+In\+Range}} (const uint64\+\_\+t \&end)
+\item 
+void \mbox{\hyperlink{class_dynamic_bit_set_a1b25cdf963f264105f64cbcf84bf85b3}{fill\+In\+Range}} (const bool \&value, const uint64\+\_\+t \&begin, const uint64\+\_\+t \&end)
+\item 
+void \mbox{\hyperlink{class_dynamic_bit_set_a0e2611331cdc184a6c1eb84e632e04d3}{clear\+In\+Range}} (const uint64\+\_\+t \&begin, const uint64\+\_\+t \&end)
+\item 
+void \mbox{\hyperlink{class_dynamic_bit_set_af5f22e733bd8dc1fd4b17834fe76a342}{set\+In\+Range}} (const uint64\+\_\+t \&begin, const uint64\+\_\+t \&end)
+\item 
+void \mbox{\hyperlink{class_dynamic_bit_set_a393d236bd56363d6df649e5774902095}{fill\+In\+Range}} (const bool \&value, const uint64\+\_\+t \&begin, const uint64\+\_\+t \&end, const uint64\+\_\+t \&step)
+\item 
+void \mbox{\hyperlink{class_dynamic_bit_set_afb4b7e23f1de25d69df76f623540f40a}{clear\+In\+Range}} (const uint64\+\_\+t \&begin, const uint64\+\_\+t \&end, const uint64\+\_\+t \&step)
+\item 
+void \mbox{\hyperlink{class_dynamic_bit_set_a3c7cb965067f8ebb5145c82c596b6027}{set\+In\+Range}} (const uint64\+\_\+t \&begin, const uint64\+\_\+t \&end, const uint64\+\_\+t \&step)
+\item 
+void \mbox{\hyperlink{class_dynamic_bit_set_ac57c57fd64ac89674f82b8b4803bc4f7}{fill\+In\+Range\+Optimized}} (const bool \&value, const uint64\+\_\+t \&begin, const uint64\+\_\+t \&end, const uint64\+\_\+t \&step)
+\item 
+void \mbox{\hyperlink{class_dynamic_bit_set_a089b53aa29e2b25b4d7b608724616a0d}{set\+In\+Range\+Fastest}} (const bool \&value, const uint64\+\_\+t \&begin, const uint64\+\_\+t \&end, const uint64\+\_\+t \&step)
+\item 
+void \mbox{\hyperlink{class_dynamic_bit_set_a37034ce8ab979fb95eb7ad866be9ae04}{set\+Chunk}} (const T \&chunk, const uint64\+\_\+t \&index)
+\item 
+void \mbox{\hyperlink{class_dynamic_bit_set_a99cd69a0df438bba7abe65cfdb96e4b4}{fill\+All\+Chunks}} (const T \&chunk)
+\item 
+void \mbox{\hyperlink{class_dynamic_bit_set_ab58ce1f1d404d6dfe6ad063f1a3c853d}{fill\+Chunk\+In\+Range}} (const T \&chunk, const uint64\+\_\+t \&end)
+\item 
+void \mbox{\hyperlink{class_dynamic_bit_set_a538f9d1219e516e92ff66cb5ac40fb00}{fill\+Chunk\+In\+Range}} (const T \&chunk, const uint64\+\_\+t \&begin, const uint64\+\_\+t \&end)
+\item 
+void \mbox{\hyperlink{class_dynamic_bit_set_ae8af68d6208084416aeca3ecd1297083}{fill\+Chunk\+In\+Range}} (const T \&chunk, const uint64\+\_\+t \&begin, const uint64\+\_\+t \&end, const uint64\+\_\+t \&step)
+\item 
+void \mbox{\hyperlink{class_dynamic_bit_set_a875fedae051843754bea5e579089aa22}{flip\+Bit}} (const uint64\+\_\+t \&index)
+\item 
+void \mbox{\hyperlink{class_dynamic_bit_set_affc66b3f6b4ec76a266fce52b056bfec}{flip\+All}} ()
+\item 
+void \mbox{\hyperlink{class_dynamic_bit_set_a92a31f026901e50d9af71300e54614a0}{flip\+In\+Range}} (const uint64\+\_\+t \&end)
+\item 
+void \mbox{\hyperlink{class_dynamic_bit_set_ab0179b939e831200727aeed01986b8e8}{flip\+In\+Range}} (const uint64\+\_\+t \&begin, const uint64\+\_\+t \&end)
+\item 
+void \mbox{\hyperlink{class_dynamic_bit_set_a8fa79fb5e3bcbfbebd9a1be745f7ca79}{flip\+In\+Range}} (const uint64\+\_\+t \&begin, const uint64\+\_\+t \&end, const uint64\+\_\+t \&step)
+\item 
+void \mbox{\hyperlink{class_dynamic_bit_set_a60709bad2ff92ed44eb28f10cf7c4efd}{flip\+Chunk}} (const uint64\+\_\+t \&index)
+\item 
+\Hypertarget{class_dynamic_bit_set_ad65dde8088a8cecc896fcca721152277}\label{class_dynamic_bit_set_ad65dde8088a8cecc896fcca721152277} 
+void {\bfseries flip\+All\+Chunks} ()
+\item 
+void \mbox{\hyperlink{class_dynamic_bit_set_a7b6866d4ec970d911a422012f90cc76a}{flip\+Chunk\+In\+Range}} (const uint64\+\_\+t \&end)
+\item 
+void \mbox{\hyperlink{class_dynamic_bit_set_aa2ea098c67753ac38e7ec835d0eb5851}{flip\+Chunk\+In\+Range}} (const uint64\+\_\+t \&begin, const uint64\+\_\+t \&end)
+\item 
+void \mbox{\hyperlink{class_dynamic_bit_set_a663c429fdb2db8b5860ed0013a5cdb07}{flip\+Chunk\+In\+Range}} (const uint64\+\_\+t \&begin, const uint64\+\_\+t \&end, const uint64\+\_\+t \&step)
+\item 
+bool \mbox{\hyperlink{class_dynamic_bit_set_a51573f67fa1b8087874bf0da153692fe}{get\+Bit}} (const uint64\+\_\+t \&index) const
+\item 
+const T \& \mbox{\hyperlink{class_dynamic_bit_set_a9d395471e8ec7253319fd251d1e9f8fe}{get\+Chunk}} (const uint64\+\_\+t \&index) const
+\item 
+T \& \mbox{\hyperlink{class_dynamic_bit_set_a4afe8be041bb54a9533538a81e95a59c}{get\+Chunk}} (const uint64\+\_\+t \&index)
+\item 
+bool \mbox{\hyperlink{class_dynamic_bit_set_ac3678d17936f45b34e5332e5ff68e5fc}{all\+Set}} () const
+\item 
+bool \mbox{\hyperlink{class_dynamic_bit_set_a6c21c8e81f1207e3d0889551be20713d}{any\+Set}} () const
+\item 
+bool \mbox{\hyperlink{class_dynamic_bit_set_ad701b77496b942a0b85001e5a75900af}{none\+Set}} () const
+\item 
+bool \mbox{\hyperlink{class_dynamic_bit_set_a55ce407b1e6d9852dd41fc0dedab93e3}{all\+Cleared}} () const
+\item 
+uint64\+\_\+t \mbox{\hyperlink{class_dynamic_bit_set_a7d86ace9ac738dacb12ed0c6c65018bd}{count\+Set\+Bits}} () const
+\item 
+bool \mbox{\hyperlink{class_dynamic_bit_set_afa5db9e78259b86168ef890b122ddc74}{empty}} () const
+\item 
+void \mbox{\hyperlink{class_dynamic_bit_set_a402cf5fc2efded82442017aa54d1fe87}{push\+Back\+Bit}} (const bool \&value)
+\item 
+void \mbox{\hyperlink{class_dynamic_bit_set_acabb565c82dab93751840122555c1a64}{pop\+Back\+Bit}} ()
+\item 
+void \mbox{\hyperlink{class_dynamic_bit_set_adf571f86206a8aa7e04e1c2d19e83508}{push\+Back\+Chunk}} (const T \&chunk)
+\item 
+void \mbox{\hyperlink{class_dynamic_bit_set_a76ef8c469b6e433fc29e0b722d40e344}{pop\+Back\+Chunk}} ()
+\item 
+void \mbox{\hyperlink{class_dynamic_bit_set_acb71c18a014a54d522b7a13674ffcb45}{resize}} (const uint64\+\_\+t \&new\+\_\+size)
+\item 
+void \mbox{\hyperlink{class_dynamic_bit_set_a22ee4b69ce8a0081e2081cb3292a8aa2}{reserve}} (const uint64\+\_\+t \&reserve\+\_\+size)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Static Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+static constexpr uint64\+\_\+t \mbox{\hyperlink{class_dynamic_bit_set_aeb6e27ae79e9dc49dc14f50599a03f9c}{calculate\+Storage\+Size}} (const uint64\+\_\+t \&\mbox{\hyperlink{class_dynamic_bit_set_a12d63eae79f9dc133c7b4e9edbcc88aa}{size}})
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+T \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{class_dynamic_bit_set_a7c8ae59284ab5322a1046dd90163cff1}{data}}
+\item 
+uint64\+\_\+t \mbox{\hyperlink{class_dynamic_bit_set_a12d63eae79f9dc133c7b4e9edbcc88aa}{size}}
+\item 
+uint64\+\_\+t \mbox{\hyperlink{class_dynamic_bit_set_a91d3b070a83f58cf5a1bca11c3ebdae0}{storage\+\_\+size}}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Static Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+static constexpr uint16\+\_\+t \mbox{\hyperlink{class_dynamic_bit_set_ac81e39b121d222846a5dde32adf833b9}{chunk\+\_\+size}} = sizeof(T) \texorpdfstring{$\ast$}{*} 8
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\Hypertarget{class_dynamic_bit_set_ac197902df4f2dc60991add9c414ca281}\label{class_dynamic_bit_set_ac197902df4f2dc60991add9c414ca281} 
+\index{DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}!DynamicBitSet@{DynamicBitSet}}
+\index{DynamicBitSet@{DynamicBitSet}!DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}}
+\doxysubsubsection{\texorpdfstring{DynamicBitSet()}{DynamicBitSet()}\hspace{0.1cm}{\footnotesize\ttfamily [1/7]}}
+{\footnotesize\ttfamily template$<$\mbox{\hyperlink{concept_unsigned_integer}{Unsigned\+Integer}} T$>$ \\
+\mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}}$<$ T $>$\mbox{\hyperlink{class_dynamic_bit_set}{\+::\+Dynamic\+Bit\+Set}} (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+Empty constructor \Hypertarget{class_dynamic_bit_set_a6178d45e8d685eb1266c6dbbef0ac19e}\label{class_dynamic_bit_set_a6178d45e8d685eb1266c6dbbef0ac19e} 
+\index{DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}!DynamicBitSet@{DynamicBitSet}}
+\index{DynamicBitSet@{DynamicBitSet}!DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}}
+\doxysubsubsection{\texorpdfstring{DynamicBitSet()}{DynamicBitSet()}\hspace{0.1cm}{\footnotesize\ttfamily [2/7]}}
+{\footnotesize\ttfamily template$<$\mbox{\hyperlink{concept_unsigned_integer}{Unsigned\+Integer}} T$>$ \\
+\mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}}$<$ T $>$\mbox{\hyperlink{class_dynamic_bit_set}{\+::\+Dynamic\+Bit\+Set}} (\begin{DoxyParamCaption}\item[{const uint64\+\_\+t \&}]{size,  }\item[{const std\+::initializer\+\_\+list$<$ T $>$}]{list }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+Size and initializer list constructor 
+\begin{DoxyParams}{Parameters}
+{\em size} & Size of the bitset to be created (in bits) \\
+\hline
+{\em list} & Initializer list to fill the bitset with, must contain {\itshape chunks} not bits \\
+\hline
+\end{DoxyParams}
+\Hypertarget{class_dynamic_bit_set_a5f85b23a6fa4b8167179c60a8ecfaf4e}\label{class_dynamic_bit_set_a5f85b23a6fa4b8167179c60a8ecfaf4e} 
+\index{DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}!DynamicBitSet@{DynamicBitSet}}
+\index{DynamicBitSet@{DynamicBitSet}!DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}}
+\doxysubsubsection{\texorpdfstring{DynamicBitSet()}{DynamicBitSet()}\hspace{0.1cm}{\footnotesize\ttfamily [3/7]}}
+{\footnotesize\ttfamily template$<$\mbox{\hyperlink{concept_unsigned_integer}{Unsigned\+Integer}} T$>$ \\
+\mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}}$<$ T $>$\mbox{\hyperlink{class_dynamic_bit_set}{\+::\+Dynamic\+Bit\+Set}} (\begin{DoxyParamCaption}\item[{const std\+::initializer\+\_\+list$<$ T $>$}]{list }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+Initializer list constructor 
+\begin{DoxyParams}{Parameters}
+{\em list} & Initializer list to fill the bitset with, must contain {\itshape chunks} not bits \\
+\hline
+\end{DoxyParams}
+\Hypertarget{class_dynamic_bit_set_aa4013d37448be14135dba3df8ae072f2}\label{class_dynamic_bit_set_aa4013d37448be14135dba3df8ae072f2} 
+\index{DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}!DynamicBitSet@{DynamicBitSet}}
+\index{DynamicBitSet@{DynamicBitSet}!DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}}
+\doxysubsubsection{\texorpdfstring{DynamicBitSet()}{DynamicBitSet()}\hspace{0.1cm}{\footnotesize\ttfamily [4/7]}}
+{\footnotesize\ttfamily template$<$\mbox{\hyperlink{concept_unsigned_integer}{Unsigned\+Integer}} T$>$ \\
+\mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}}$<$ T $>$\mbox{\hyperlink{class_dynamic_bit_set}{\+::\+Dynamic\+Bit\+Set}} (\begin{DoxyParamCaption}\item[{const uint64\+\_\+t \&}]{size }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+Size constructor 
+\begin{DoxyParams}{Parameters}
+{\em size} & Size of the bitset to be created (bit count) \\
+\hline
+\end{DoxyParams}
+\Hypertarget{class_dynamic_bit_set_a9531005b1585be4a252ad8b83384db99}\label{class_dynamic_bit_set_a9531005b1585be4a252ad8b83384db99} 
+\index{DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}!DynamicBitSet@{DynamicBitSet}}
+\index{DynamicBitSet@{DynamicBitSet}!DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}}
+\doxysubsubsection{\texorpdfstring{DynamicBitSet()}{DynamicBitSet()}\hspace{0.1cm}{\footnotesize\ttfamily [5/7]}}
+{\footnotesize\ttfamily template$<$\mbox{\hyperlink{concept_unsigned_integer}{Unsigned\+Integer}} T$>$ \\
+\mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}}$<$ T $>$\mbox{\hyperlink{class_dynamic_bit_set}{\+::\+Dynamic\+Bit\+Set}} (\begin{DoxyParamCaption}\item[{const uint64\+\_\+t \&}]{size,  }\item[{const bool \&}]{value }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+Size and value constructor 
+\begin{DoxyParams}{Parameters}
+{\em size} & Size of the bitset to be created (bit count) \\
+\hline
+{\em value} & Value to fill the bitset with (bit value) \\
+\hline
+\end{DoxyParams}
+\Hypertarget{class_dynamic_bit_set_ae1948947a4be122a903b92c15be3ee30}\label{class_dynamic_bit_set_ae1948947a4be122a903b92c15be3ee30} 
+\index{DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}!DynamicBitSet@{DynamicBitSet}}
+\index{DynamicBitSet@{DynamicBitSet}!DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}}
+\doxysubsubsection{\texorpdfstring{DynamicBitSet()}{DynamicBitSet()}\hspace{0.1cm}{\footnotesize\ttfamily [6/7]}}
+{\footnotesize\ttfamily template$<$\mbox{\hyperlink{concept_unsigned_integer}{Unsigned\+Integer}} T$>$ \\
+\mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}}$<$ T $>$\mbox{\hyperlink{class_dynamic_bit_set}{\+::\+Dynamic\+Bit\+Set}} (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}}$<$ T $>$ \&}]{other }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+Copy constructor 
+\begin{DoxyParams}{Parameters}
+{\em other} & Other \doxylink{class_dynamic_bit_set}{Dynamic\+Bit\+Set} instance to copy from \\
+\hline
+\end{DoxyParams}
+\Hypertarget{class_dynamic_bit_set_a308c92cc7cda0c2eb80b6294285681c2}\label{class_dynamic_bit_set_a308c92cc7cda0c2eb80b6294285681c2} 
+\index{DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}!DynamicBitSet@{DynamicBitSet}}
+\index{DynamicBitSet@{DynamicBitSet}!DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}}
+\doxysubsubsection{\texorpdfstring{DynamicBitSet()}{DynamicBitSet()}\hspace{0.1cm}{\footnotesize\ttfamily [7/7]}}
+{\footnotesize\ttfamily template$<$\mbox{\hyperlink{concept_unsigned_integer}{Unsigned\+Integer}} T$>$ \\
+\mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}}$<$ T $>$\mbox{\hyperlink{class_dynamic_bit_set}{\+::\+Dynamic\+Bit\+Set}} (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}}$<$ T $>$ \&\&}]{other }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [noexcept]}}
+
+Move constructor 
+\begin{DoxyParams}{Parameters}
+{\em other} & Other \doxylink{class_dynamic_bit_set}{Dynamic\+Bit\+Set} instance to move from \\
+\hline
+\end{DoxyParams}
+\Hypertarget{class_dynamic_bit_set_a128288c5529076ef9c7cc7e215c929f9}\label{class_dynamic_bit_set_a128288c5529076ef9c7cc7e215c929f9} 
+\index{DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}!````~DynamicBitSet@{\texorpdfstring{$\sim$}{\string~}DynamicBitSet}}
+\index{````~DynamicBitSet@{\texorpdfstring{$\sim$}{\string~}DynamicBitSet}!DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}}
+\doxysubsubsection{\texorpdfstring{\texorpdfstring{$\sim$}{\string~}DynamicBitSet()}{\string~DynamicBitSet()}}
+{\footnotesize\ttfamily template$<$\mbox{\hyperlink{concept_unsigned_integer}{Unsigned\+Integer}} T$>$ \\
+\mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}}$<$ T $>$\+::\texorpdfstring{$\sim$}{\string~}\mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}} (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+Destructor 
+
+\doxysubsection{Member Function Documentation}
+\Hypertarget{class_dynamic_bit_set_a55ce407b1e6d9852dd41fc0dedab93e3}\label{class_dynamic_bit_set_a55ce407b1e6d9852dd41fc0dedab93e3} 
+\index{DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}!allCleared@{allCleared}}
+\index{allCleared@{allCleared}!DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}}
+\doxysubsubsection{\texorpdfstring{allCleared()}{allCleared()}}
+{\footnotesize\ttfamily template$<$\mbox{\hyperlink{concept_unsigned_integer}{Unsigned\+Integer}} T$>$ \\
+bool \mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}}$<$ T $>$\+::all\+Cleared (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+Checks if all bits are cleared \begin{DoxyReturn}{Returns}
+true if all bits are cleared, false otherwise 
+\end{DoxyReturn}
+\Hypertarget{class_dynamic_bit_set_ac3678d17936f45b34e5332e5ff68e5fc}\label{class_dynamic_bit_set_ac3678d17936f45b34e5332e5ff68e5fc} 
+\index{DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}!allSet@{allSet}}
+\index{allSet@{allSet}!DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}}
+\doxysubsubsection{\texorpdfstring{allSet()}{allSet()}}
+{\footnotesize\ttfamily template$<$\mbox{\hyperlink{concept_unsigned_integer}{Unsigned\+Integer}} T$>$ \\
+bool \mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}}$<$ T $>$\+::all\+Set (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+Checks if all bits are set \begin{DoxyReturn}{Returns}
+true if all bits are set, false otherwise 
+\end{DoxyReturn}
+\Hypertarget{class_dynamic_bit_set_a6c21c8e81f1207e3d0889551be20713d}\label{class_dynamic_bit_set_a6c21c8e81f1207e3d0889551be20713d} 
+\index{DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}!anySet@{anySet}}
+\index{anySet@{anySet}!DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}}
+\doxysubsubsection{\texorpdfstring{anySet()}{anySet()}}
+{\footnotesize\ttfamily template$<$\mbox{\hyperlink{concept_unsigned_integer}{Unsigned\+Integer}} T$>$ \\
+bool \mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}}$<$ T $>$\+::any\+Set (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+Checks if any bit is set \begin{DoxyReturn}{Returns}
+true if any bit is set, false otherwise 
+\end{DoxyReturn}
+\Hypertarget{class_dynamic_bit_set_aeb6e27ae79e9dc49dc14f50599a03f9c}\label{class_dynamic_bit_set_aeb6e27ae79e9dc49dc14f50599a03f9c} 
+\index{DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}!calculateStorageSize@{calculateStorageSize}}
+\index{calculateStorageSize@{calculateStorageSize}!DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}}
+\doxysubsubsection{\texorpdfstring{calculateStorageSize()}{calculateStorageSize()}}
+{\footnotesize\ttfamily template$<$\mbox{\hyperlink{concept_unsigned_integer}{Unsigned\+Integer}} T$>$ \\
+static constexpr uint64\+\_\+t \mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}}$<$ T $>$\+::calculate\+Storage\+Size (\begin{DoxyParamCaption}\item[{const uint64\+\_\+t \&}]{size }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}, {\ttfamily [constexpr]}}
+
+Returns the number of chunks the bitset would utilize for given size 
+\begin{DoxyParams}{Parameters}
+{\em size} & Size of the target bitset in bits \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The number of chunks the bitset would utilize for the given size 
+\end{DoxyReturn}
+\Hypertarget{class_dynamic_bit_set_ab4e059f8ebe1269907d09f786d2d82fd}\label{class_dynamic_bit_set_ab4e059f8ebe1269907d09f786d2d82fd} 
+\index{DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}!clearAll@{clearAll}}
+\index{clearAll@{clearAll}!DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}}
+\doxysubsubsection{\texorpdfstring{clearAll()}{clearAll()}}
+{\footnotesize\ttfamily template$<$\mbox{\hyperlink{concept_unsigned_integer}{Unsigned\+Integer}} T$>$ \\
+void \mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}}$<$ T $>$\+::clear\+All (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+Clears all the bits (sets all bits to 0) \Hypertarget{class_dynamic_bit_set_ace80324881807d8b68137900f83239ab}\label{class_dynamic_bit_set_ace80324881807d8b68137900f83239ab} 
+\index{DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}!clearBit@{clearBit}}
+\index{clearBit@{clearBit}!DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}}
+\doxysubsubsection{\texorpdfstring{clearBit()}{clearBit()}}
+{\footnotesize\ttfamily template$<$\mbox{\hyperlink{concept_unsigned_integer}{Unsigned\+Integer}} T$>$ \\
+void \mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}}$<$ T $>$\+::clear\+Bit (\begin{DoxyParamCaption}\item[{const uint64\+\_\+t \&}]{index }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+Sets the bit at the specified index to 0 (false) 
+\begin{DoxyParams}{Parameters}
+{\em index} & Index of the bit to clear (bit index) \\
+\hline
+\end{DoxyParams}
+\Hypertarget{class_dynamic_bit_set_a0e2611331cdc184a6c1eb84e632e04d3}\label{class_dynamic_bit_set_a0e2611331cdc184a6c1eb84e632e04d3} 
+\index{DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}!clearInRange@{clearInRange}}
+\index{clearInRange@{clearInRange}!DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}}
+\doxysubsubsection{\texorpdfstring{clearInRange()}{clearInRange()}\hspace{0.1cm}{\footnotesize\ttfamily [1/3]}}
+{\footnotesize\ttfamily template$<$\mbox{\hyperlink{concept_unsigned_integer}{Unsigned\+Integer}} T$>$ \\
+void \mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}}$<$ T $>$\+::clear\+In\+Range (\begin{DoxyParamCaption}\item[{const uint64\+\_\+t \&}]{begin,  }\item[{const uint64\+\_\+t \&}]{end }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+Fills all the bits in the specified range with 0 (false) 
+\begin{DoxyParams}{Parameters}
+{\em begin} & Begin of the range to fill (bit index) \\
+\hline
+{\em end} & End of the range to fill (bit index) \\
+\hline
+\end{DoxyParams}
+\Hypertarget{class_dynamic_bit_set_afb4b7e23f1de25d69df76f623540f40a}\label{class_dynamic_bit_set_afb4b7e23f1de25d69df76f623540f40a} 
+\index{DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}!clearInRange@{clearInRange}}
+\index{clearInRange@{clearInRange}!DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}}
+\doxysubsubsection{\texorpdfstring{clearInRange()}{clearInRange()}\hspace{0.1cm}{\footnotesize\ttfamily [2/3]}}
+{\footnotesize\ttfamily template$<$\mbox{\hyperlink{concept_unsigned_integer}{Unsigned\+Integer}} T$>$ \\
+void \mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}}$<$ T $>$\+::clear\+In\+Range (\begin{DoxyParamCaption}\item[{const uint64\+\_\+t \&}]{begin,  }\item[{const uint64\+\_\+t \&}]{end,  }\item[{const uint64\+\_\+t \&}]{step }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+Fills all the bits in the specified range with 0 (false) 
+\begin{DoxyParams}{Parameters}
+{\em begin} & Begin of the range to fill (bit index) \\
+\hline
+{\em end} & End of the range to fill (bit index) \\
+\hline
+{\em step} & Step size between the bits to fill (bit step) \\
+\hline
+\end{DoxyParams}
+\Hypertarget{class_dynamic_bit_set_abff8e27831681d5503ce4f9a71478797}\label{class_dynamic_bit_set_abff8e27831681d5503ce4f9a71478797} 
+\index{DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}!clearInRange@{clearInRange}}
+\index{clearInRange@{clearInRange}!DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}}
+\doxysubsubsection{\texorpdfstring{clearInRange()}{clearInRange()}\hspace{0.1cm}{\footnotesize\ttfamily [3/3]}}
+{\footnotesize\ttfamily template$<$\mbox{\hyperlink{concept_unsigned_integer}{Unsigned\+Integer}} T$>$ \\
+void \mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}}$<$ T $>$\+::clear\+In\+Range (\begin{DoxyParamCaption}\item[{const uint64\+\_\+t \&}]{end }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+Fills all the bits in the specified range with 0 (false) 
+\begin{DoxyParams}{Parameters}
+{\em end} & End of the range to fill (bit index) \\
+\hline
+\end{DoxyParams}
+\Hypertarget{class_dynamic_bit_set_a7d86ace9ac738dacb12ed0c6c65018bd}\label{class_dynamic_bit_set_a7d86ace9ac738dacb12ed0c6c65018bd} 
+\index{DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}!countSetBits@{countSetBits}}
+\index{countSetBits@{countSetBits}!DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}}
+\doxysubsubsection{\texorpdfstring{countSetBits()}{countSetBits()}}
+{\footnotesize\ttfamily template$<$\mbox{\hyperlink{concept_unsigned_integer}{Unsigned\+Integer}} T$>$ \\
+uint64\+\_\+t \mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}}$<$ T $>$\+::count\+Set\+Bits (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+\begin{DoxyReturn}{Returns}
+The number of set bits 
+\end{DoxyReturn}
+\Hypertarget{class_dynamic_bit_set_afa5db9e78259b86168ef890b122ddc74}\label{class_dynamic_bit_set_afa5db9e78259b86168ef890b122ddc74} 
+\index{DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}!empty@{empty}}
+\index{empty@{empty}!DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}}
+\doxysubsubsection{\texorpdfstring{empty()}{empty()}}
+{\footnotesize\ttfamily template$<$\mbox{\hyperlink{concept_unsigned_integer}{Unsigned\+Integer}} T$>$ \\
+bool \mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}}$<$ T $>$\+::empty (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+Checks if the bitset is empty \begin{DoxyReturn}{Returns}
+true if the bitset is empty, false otherwise 
+\end{DoxyReturn}
+\Hypertarget{class_dynamic_bit_set_a9e05f156a63466b10edce1ee834541b2}\label{class_dynamic_bit_set_a9e05f156a63466b10edce1ee834541b2} 
+\index{DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}!fillAll@{fillAll}}
+\index{fillAll@{fillAll}!DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}}
+\doxysubsubsection{\texorpdfstring{fillAll()}{fillAll()}}
+{\footnotesize\ttfamily template$<$\mbox{\hyperlink{concept_unsigned_integer}{Unsigned\+Integer}} T$>$ \\
+void \mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}}$<$ T $>$\+::fill\+All (\begin{DoxyParamCaption}\item[{const bool \&}]{value }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+Fills all the bits with the specified value 
+\begin{DoxyParams}{Parameters}
+{\em value} & Value to fill the bits with (bit value) \\
+\hline
+\end{DoxyParams}
+\Hypertarget{class_dynamic_bit_set_a99cd69a0df438bba7abe65cfdb96e4b4}\label{class_dynamic_bit_set_a99cd69a0df438bba7abe65cfdb96e4b4} 
+\index{DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}!fillAllChunks@{fillAllChunks}}
+\index{fillAllChunks@{fillAllChunks}!DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}}
+\doxysubsubsection{\texorpdfstring{fillAllChunks()}{fillAllChunks()}}
+{\footnotesize\ttfamily template$<$\mbox{\hyperlink{concept_unsigned_integer}{Unsigned\+Integer}} T$>$ \\
+void \mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}}$<$ T $>$\+::fill\+All\+Chunks (\begin{DoxyParamCaption}\item[{const T \&}]{chunk }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+Fills all the chunks with the specified chunk 
+\begin{DoxyParams}{Parameters}
+{\em chunk} & Chunk to fill the chunks with (chunk value) \\
+\hline
+\end{DoxyParams}
+\Hypertarget{class_dynamic_bit_set_a538f9d1219e516e92ff66cb5ac40fb00}\label{class_dynamic_bit_set_a538f9d1219e516e92ff66cb5ac40fb00} 
+\index{DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}!fillChunkInRange@{fillChunkInRange}}
+\index{fillChunkInRange@{fillChunkInRange}!DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}}
+\doxysubsubsection{\texorpdfstring{fillChunkInRange()}{fillChunkInRange()}\hspace{0.1cm}{\footnotesize\ttfamily [1/3]}}
+{\footnotesize\ttfamily template$<$\mbox{\hyperlink{concept_unsigned_integer}{Unsigned\+Integer}} T$>$ \\
+void \mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}}$<$ T $>$\+::fill\+Chunk\+In\+Range (\begin{DoxyParamCaption}\item[{const T \&}]{chunk,  }\item[{const uint64\+\_\+t \&}]{begin,  }\item[{const uint64\+\_\+t \&}]{end }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+Fills all the bits in the specified range with the specified chunk 
+\begin{DoxyParams}{Parameters}
+{\em chunk} & Chunk to fill the bits with \\
+\hline
+{\em begin} & begin of the range to fill (chunk index) \\
+\hline
+{\em end} & End of the range to fill (chunk index) \\
+\hline
+\end{DoxyParams}
+\Hypertarget{class_dynamic_bit_set_ae8af68d6208084416aeca3ecd1297083}\label{class_dynamic_bit_set_ae8af68d6208084416aeca3ecd1297083} 
+\index{DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}!fillChunkInRange@{fillChunkInRange}}
+\index{fillChunkInRange@{fillChunkInRange}!DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}}
+\doxysubsubsection{\texorpdfstring{fillChunkInRange()}{fillChunkInRange()}\hspace{0.1cm}{\footnotesize\ttfamily [2/3]}}
+{\footnotesize\ttfamily template$<$\mbox{\hyperlink{concept_unsigned_integer}{Unsigned\+Integer}} T$>$ \\
+void \mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}}$<$ T $>$\+::fill\+Chunk\+In\+Range (\begin{DoxyParamCaption}\item[{const T \&}]{chunk,  }\item[{const uint64\+\_\+t \&}]{begin,  }\item[{const uint64\+\_\+t \&}]{end,  }\item[{const uint64\+\_\+t \&}]{step }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+Fills all the bits in the specified range with the specified chunk 
+\begin{DoxyParams}{Parameters}
+{\em chunk} & Chunk to fill the bits with (chunk value) \\
+\hline
+{\em begin} & begin of the range to fill (chunk index) \\
+\hline
+{\em end} & End of the range to fill (chunk index) \\
+\hline
+{\em step} & Step size between the bits to fill (chunk step) \\
+\hline
+\end{DoxyParams}
+\Hypertarget{class_dynamic_bit_set_ab58ce1f1d404d6dfe6ad063f1a3c853d}\label{class_dynamic_bit_set_ab58ce1f1d404d6dfe6ad063f1a3c853d} 
+\index{DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}!fillChunkInRange@{fillChunkInRange}}
+\index{fillChunkInRange@{fillChunkInRange}!DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}}
+\doxysubsubsection{\texorpdfstring{fillChunkInRange()}{fillChunkInRange()}\hspace{0.1cm}{\footnotesize\ttfamily [3/3]}}
+{\footnotesize\ttfamily template$<$\mbox{\hyperlink{concept_unsigned_integer}{Unsigned\+Integer}} T$>$ \\
+void \mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}}$<$ T $>$\+::fill\+Chunk\+In\+Range (\begin{DoxyParamCaption}\item[{const T \&}]{chunk,  }\item[{const uint64\+\_\+t \&}]{end }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+Fills all the bits in the specified range with the specified chunk 
+\begin{DoxyParams}{Parameters}
+{\em chunk} & Chunk to fill the bits with (chunk value) \\
+\hline
+{\em end} & End of the range to fill (chunk index) \\
+\hline
+\end{DoxyParams}
+\Hypertarget{class_dynamic_bit_set_a1b25cdf963f264105f64cbcf84bf85b3}\label{class_dynamic_bit_set_a1b25cdf963f264105f64cbcf84bf85b3} 
+\index{DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}!fillInRange@{fillInRange}}
+\index{fillInRange@{fillInRange}!DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}}
+\doxysubsubsection{\texorpdfstring{fillInRange()}{fillInRange()}\hspace{0.1cm}{\footnotesize\ttfamily [1/3]}}
+{\footnotesize\ttfamily template$<$\mbox{\hyperlink{concept_unsigned_integer}{Unsigned\+Integer}} T$>$ \\
+void \mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}}$<$ T $>$\+::fill\+In\+Range (\begin{DoxyParamCaption}\item[{const bool \&}]{value,  }\item[{const uint64\+\_\+t \&}]{begin,  }\item[{const uint64\+\_\+t \&}]{end }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+Fills all the bits in the specified range with the specified value 
+\begin{DoxyParams}{Parameters}
+{\em value} & Value to fill the bits with (bit value) \\
+\hline
+{\em begin} & Begin of the range to fill (bit index) \\
+\hline
+{\em end} & End of the range to fill (bit index) \\
+\hline
+\end{DoxyParams}
+\Hypertarget{class_dynamic_bit_set_a393d236bd56363d6df649e5774902095}\label{class_dynamic_bit_set_a393d236bd56363d6df649e5774902095} 
+\index{DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}!fillInRange@{fillInRange}}
+\index{fillInRange@{fillInRange}!DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}}
+\doxysubsubsection{\texorpdfstring{fillInRange()}{fillInRange()}\hspace{0.1cm}{\footnotesize\ttfamily [2/3]}}
+{\footnotesize\ttfamily template$<$\mbox{\hyperlink{concept_unsigned_integer}{Unsigned\+Integer}} T$>$ \\
+void \mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}}$<$ T $>$\+::fill\+In\+Range (\begin{DoxyParamCaption}\item[{const bool \&}]{value,  }\item[{const uint64\+\_\+t \&}]{begin,  }\item[{const uint64\+\_\+t \&}]{end,  }\item[{const uint64\+\_\+t \&}]{step }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+Fills all the bits in the specified range with the specified value 
+\begin{DoxyParams}{Parameters}
+{\em value} & Value to fill the bits with (bit value) \\
+\hline
+{\em begin} & Begin of the range to fill (bit index) \\
+\hline
+{\em end} & End of the range to fill (bit index) \\
+\hline
+{\em step} & Step size between the bits to fill (bit step) \\
+\hline
+\end{DoxyParams}
+\Hypertarget{class_dynamic_bit_set_afbb90ffb5ad6e87098cd5f1c1f23a1ce}\label{class_dynamic_bit_set_afbb90ffb5ad6e87098cd5f1c1f23a1ce} 
+\index{DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}!fillInRange@{fillInRange}}
+\index{fillInRange@{fillInRange}!DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}}
+\doxysubsubsection{\texorpdfstring{fillInRange()}{fillInRange()}\hspace{0.1cm}{\footnotesize\ttfamily [3/3]}}
+{\footnotesize\ttfamily template$<$\mbox{\hyperlink{concept_unsigned_integer}{Unsigned\+Integer}} T$>$ \\
+void \mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}}$<$ T $>$\+::fill\+In\+Range (\begin{DoxyParamCaption}\item[{const bool \&}]{value,  }\item[{const uint64\+\_\+t \&}]{end }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+Fills all the bits in the specified range with the specified value 
+\begin{DoxyParams}{Parameters}
+{\em value} & Value to fill the bits with (bit value) \\
+\hline
+{\em end} & End of the range to fill (bit index) \\
+\hline
+\end{DoxyParams}
+\Hypertarget{class_dynamic_bit_set_ac57c57fd64ac89674f82b8b4803bc4f7}\label{class_dynamic_bit_set_ac57c57fd64ac89674f82b8b4803bc4f7} 
+\index{DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}!fillInRangeOptimized@{fillInRangeOptimized}}
+\index{fillInRangeOptimized@{fillInRangeOptimized}!DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}}
+\doxysubsubsection{\texorpdfstring{fillInRangeOptimized()}{fillInRangeOptimized()}}
+{\footnotesize\ttfamily template$<$\mbox{\hyperlink{concept_unsigned_integer}{Unsigned\+Integer}} T$>$ \\
+void \mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}}$<$ T $>$\+::fill\+In\+Range\+Optimized (\begin{DoxyParamCaption}\item[{const bool \&}]{value,  }\item[{const uint64\+\_\+t \&}]{begin,  }\item[{const uint64\+\_\+t \&}]{end,  }\item[{const uint64\+\_\+t \&}]{step }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+!!! W.\+I.\+P. -\/ Does not function correctly at the moment !!!~\newline
+Fill the bits in the specified range with the specified value using an optimized algorithm.~\newline
+This algorithm is particularly efficient when the step size is relatively low.~\newline
+Note\+: This function has a rather complex implementation. It is not recommended to use it when simple filling without a step is possible.~\newline
+Performance of this function varies significantly depending on the step. It performs best when step is a multiple of chunk\+\_\+size, and is within reasonable range from it.~\newline
+However, worst when step is not aligned with chunk\+\_\+size and end is not aligned with chunk\+\_\+size. In such cases, extra processing is required to handle the boundary chunks.~\newline
+
+\begin{DoxyParams}{Parameters}
+{\em value} & Value to fill the bits with (bit value) \\
+\hline
+{\em begin} & Begin of the range to fill (bit index) \\
+\hline
+{\em end} & End of the range to fill (bit index) \\
+\hline
+{\em step} & Step size between the bits to fill (bit step) \\
+\hline
+\end{DoxyParams}
+\Hypertarget{class_dynamic_bit_set_affc66b3f6b4ec76a266fce52b056bfec}\label{class_dynamic_bit_set_affc66b3f6b4ec76a266fce52b056bfec} 
+\index{DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}!flipAll@{flipAll}}
+\index{flipAll@{flipAll}!DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}}
+\doxysubsubsection{\texorpdfstring{flipAll()}{flipAll()}}
+{\footnotesize\ttfamily template$<$\mbox{\hyperlink{concept_unsigned_integer}{Unsigned\+Integer}} T$>$ \\
+void \mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}}$<$ T $>$\+::flip\+All (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+Flips all the bits \Hypertarget{class_dynamic_bit_set_a875fedae051843754bea5e579089aa22}\label{class_dynamic_bit_set_a875fedae051843754bea5e579089aa22} 
+\index{DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}!flipBit@{flipBit}}
+\index{flipBit@{flipBit}!DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}}
+\doxysubsubsection{\texorpdfstring{flipBit()}{flipBit()}}
+{\footnotesize\ttfamily template$<$\mbox{\hyperlink{concept_unsigned_integer}{Unsigned\+Integer}} T$>$ \\
+void \mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}}$<$ T $>$\+::flip\+Bit (\begin{DoxyParamCaption}\item[{const uint64\+\_\+t \&}]{index }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+Flips the bit at the specified index 
+\begin{DoxyParams}{Parameters}
+{\em index} & Index of the bit to flip (bit index) \\
+\hline
+\end{DoxyParams}
+\Hypertarget{class_dynamic_bit_set_a60709bad2ff92ed44eb28f10cf7c4efd}\label{class_dynamic_bit_set_a60709bad2ff92ed44eb28f10cf7c4efd} 
+\index{DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}!flipChunk@{flipChunk}}
+\index{flipChunk@{flipChunk}!DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}}
+\doxysubsubsection{\texorpdfstring{flipChunk()}{flipChunk()}}
+{\footnotesize\ttfamily template$<$\mbox{\hyperlink{concept_unsigned_integer}{Unsigned\+Integer}} T$>$ \\
+void \mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}}$<$ T $>$\+::flip\+Chunk (\begin{DoxyParamCaption}\item[{const uint64\+\_\+t \&}]{index }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+Flips the chunk at the specified index 
+\begin{DoxyParams}{Parameters}
+{\em index} & Index of the chunk to flip (chunk index) \\
+\hline
+\end{DoxyParams}
+\Hypertarget{class_dynamic_bit_set_aa2ea098c67753ac38e7ec835d0eb5851}\label{class_dynamic_bit_set_aa2ea098c67753ac38e7ec835d0eb5851} 
+\index{DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}!flipChunkInRange@{flipChunkInRange}}
+\index{flipChunkInRange@{flipChunkInRange}!DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}}
+\doxysubsubsection{\texorpdfstring{flipChunkInRange()}{flipChunkInRange()}\hspace{0.1cm}{\footnotesize\ttfamily [1/3]}}
+{\footnotesize\ttfamily template$<$\mbox{\hyperlink{concept_unsigned_integer}{Unsigned\+Integer}} T$>$ \\
+void \mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}}$<$ T $>$\+::flip\+Chunk\+In\+Range (\begin{DoxyParamCaption}\item[{const uint64\+\_\+t \&}]{begin,  }\item[{const uint64\+\_\+t \&}]{end }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+Flips all the chunks in the specified range 
+\begin{DoxyParams}{Parameters}
+{\em begin} & Begin of the range to fill (chunk index) \\
+\hline
+{\em end} & End of the range to fill (chunk index) \\
+\hline
+\end{DoxyParams}
+\Hypertarget{class_dynamic_bit_set_a663c429fdb2db8b5860ed0013a5cdb07}\label{class_dynamic_bit_set_a663c429fdb2db8b5860ed0013a5cdb07} 
+\index{DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}!flipChunkInRange@{flipChunkInRange}}
+\index{flipChunkInRange@{flipChunkInRange}!DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}}
+\doxysubsubsection{\texorpdfstring{flipChunkInRange()}{flipChunkInRange()}\hspace{0.1cm}{\footnotesize\ttfamily [2/3]}}
+{\footnotesize\ttfamily template$<$\mbox{\hyperlink{concept_unsigned_integer}{Unsigned\+Integer}} T$>$ \\
+void \mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}}$<$ T $>$\+::flip\+Chunk\+In\+Range (\begin{DoxyParamCaption}\item[{const uint64\+\_\+t \&}]{begin,  }\item[{const uint64\+\_\+t \&}]{end,  }\item[{const uint64\+\_\+t \&}]{step }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+Flips all the chunks in the specified range 
+\begin{DoxyParams}{Parameters}
+{\em begin} & Begin of the range to fill (chunk index) \\
+\hline
+{\em end} & End of the range to fill (chunk index) \\
+\hline
+{\em step} & Step size between the bits to flip (chunk step) \\
+\hline
+\end{DoxyParams}
+\Hypertarget{class_dynamic_bit_set_a7b6866d4ec970d911a422012f90cc76a}\label{class_dynamic_bit_set_a7b6866d4ec970d911a422012f90cc76a} 
+\index{DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}!flipChunkInRange@{flipChunkInRange}}
+\index{flipChunkInRange@{flipChunkInRange}!DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}}
+\doxysubsubsection{\texorpdfstring{flipChunkInRange()}{flipChunkInRange()}\hspace{0.1cm}{\footnotesize\ttfamily [3/3]}}
+{\footnotesize\ttfamily template$<$\mbox{\hyperlink{concept_unsigned_integer}{Unsigned\+Integer}} T$>$ \\
+void \mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}}$<$ T $>$\+::flip\+Chunk\+In\+Range (\begin{DoxyParamCaption}\item[{const uint64\+\_\+t \&}]{end }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+Flips all the chunks in the specified range 
+\begin{DoxyParams}{Parameters}
+{\em end} & End of the range to fill (chunk index) \\
+\hline
+\end{DoxyParams}
+\Hypertarget{class_dynamic_bit_set_ab0179b939e831200727aeed01986b8e8}\label{class_dynamic_bit_set_ab0179b939e831200727aeed01986b8e8} 
+\index{DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}!flipInRange@{flipInRange}}
+\index{flipInRange@{flipInRange}!DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}}
+\doxysubsubsection{\texorpdfstring{flipInRange()}{flipInRange()}\hspace{0.1cm}{\footnotesize\ttfamily [1/3]}}
+{\footnotesize\ttfamily template$<$\mbox{\hyperlink{concept_unsigned_integer}{Unsigned\+Integer}} T$>$ \\
+void \mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}}$<$ T $>$\+::flip\+In\+Range (\begin{DoxyParamCaption}\item[{const uint64\+\_\+t \&}]{begin,  }\item[{const uint64\+\_\+t \&}]{end }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+Flip all the bits in the specified range 
+\begin{DoxyParams}{Parameters}
+{\em begin} & Begin of the range to fill (bit index) \\
+\hline
+{\em end} & End of the range to fill (bit index) \\
+\hline
+\end{DoxyParams}
+\Hypertarget{class_dynamic_bit_set_a8fa79fb5e3bcbfbebd9a1be745f7ca79}\label{class_dynamic_bit_set_a8fa79fb5e3bcbfbebd9a1be745f7ca79} 
+\index{DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}!flipInRange@{flipInRange}}
+\index{flipInRange@{flipInRange}!DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}}
+\doxysubsubsection{\texorpdfstring{flipInRange()}{flipInRange()}\hspace{0.1cm}{\footnotesize\ttfamily [2/3]}}
+{\footnotesize\ttfamily template$<$\mbox{\hyperlink{concept_unsigned_integer}{Unsigned\+Integer}} T$>$ \\
+void \mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}}$<$ T $>$\+::flip\+In\+Range (\begin{DoxyParamCaption}\item[{const uint64\+\_\+t \&}]{begin,  }\item[{const uint64\+\_\+t \&}]{end,  }\item[{const uint64\+\_\+t \&}]{step }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+Flips all the bits in the specified range 
+\begin{DoxyParams}{Parameters}
+{\em begin} & Begin of the range to fill (bit index) \\
+\hline
+{\em end} & End of the range to fill (bit index) \\
+\hline
+{\em step} & Step size between the bits to flip (bit step) \\
+\hline
+\end{DoxyParams}
+\Hypertarget{class_dynamic_bit_set_a92a31f026901e50d9af71300e54614a0}\label{class_dynamic_bit_set_a92a31f026901e50d9af71300e54614a0} 
+\index{DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}!flipInRange@{flipInRange}}
+\index{flipInRange@{flipInRange}!DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}}
+\doxysubsubsection{\texorpdfstring{flipInRange()}{flipInRange()}\hspace{0.1cm}{\footnotesize\ttfamily [3/3]}}
+{\footnotesize\ttfamily template$<$\mbox{\hyperlink{concept_unsigned_integer}{Unsigned\+Integer}} T$>$ \\
+void \mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}}$<$ T $>$\+::flip\+In\+Range (\begin{DoxyParamCaption}\item[{const uint64\+\_\+t \&}]{end }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+Flips all the bits in the specified range 
+\begin{DoxyParams}{Parameters}
+{\em end} & End of the range to fill (bit index) \\
+\hline
+\end{DoxyParams}
+\Hypertarget{class_dynamic_bit_set_a51573f67fa1b8087874bf0da153692fe}\label{class_dynamic_bit_set_a51573f67fa1b8087874bf0da153692fe} 
+\index{DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}!getBit@{getBit}}
+\index{getBit@{getBit}!DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}}
+\doxysubsubsection{\texorpdfstring{getBit()}{getBit()}}
+{\footnotesize\ttfamily template$<$\mbox{\hyperlink{concept_unsigned_integer}{Unsigned\+Integer}} T$>$ \\
+bool \mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}}$<$ T $>$\+::get\+Bit (\begin{DoxyParamCaption}\item[{const uint64\+\_\+t \&}]{index }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+Retrieves the value of a bit at a specified index 
+\begin{DoxyParams}{Parameters}
+{\em index} & The index of the bit to read (bit index) \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The value of the bit at the specified index 
+\end{DoxyReturn}
+\Hypertarget{class_dynamic_bit_set_a4afe8be041bb54a9533538a81e95a59c}\label{class_dynamic_bit_set_a4afe8be041bb54a9533538a81e95a59c} 
+\index{DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}!getChunk@{getChunk}}
+\index{getChunk@{getChunk}!DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}}
+\doxysubsubsection{\texorpdfstring{getChunk()}{getChunk()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily template$<$\mbox{\hyperlink{concept_unsigned_integer}{Unsigned\+Integer}} T$>$ \\
+T \& \mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}}$<$ T $>$\+::get\+Chunk (\begin{DoxyParamCaption}\item[{const uint64\+\_\+t \&}]{index }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+Retrieves the chunk at the specified index 
+\begin{DoxyParams}{Parameters}
+{\em index} & Index of the chunk to retrieve (chunk index) \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+Chunk at the specified index 
+\end{DoxyReturn}
+\Hypertarget{class_dynamic_bit_set_a9d395471e8ec7253319fd251d1e9f8fe}\label{class_dynamic_bit_set_a9d395471e8ec7253319fd251d1e9f8fe} 
+\index{DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}!getChunk@{getChunk}}
+\index{getChunk@{getChunk}!DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}}
+\doxysubsubsection{\texorpdfstring{getChunk()}{getChunk()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily template$<$\mbox{\hyperlink{concept_unsigned_integer}{Unsigned\+Integer}} T$>$ \\
+const T \& \mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}}$<$ T $>$\+::get\+Chunk (\begin{DoxyParamCaption}\item[{const uint64\+\_\+t \&}]{index }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+Retrieves the chunk at the specified index 
+\begin{DoxyParams}{Parameters}
+{\em index} & Index of the chunk to retrieve (chunk index) \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+Chunk at the specified index 
+\end{DoxyReturn}
+\Hypertarget{class_dynamic_bit_set_ad701b77496b942a0b85001e5a75900af}\label{class_dynamic_bit_set_ad701b77496b942a0b85001e5a75900af} 
+\index{DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}!noneSet@{noneSet}}
+\index{noneSet@{noneSet}!DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}}
+\doxysubsubsection{\texorpdfstring{noneSet()}{noneSet()}}
+{\footnotesize\ttfamily template$<$\mbox{\hyperlink{concept_unsigned_integer}{Unsigned\+Integer}} T$>$ \\
+bool \mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}}$<$ T $>$\+::none\+Set (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+Checks if none of the bits are set \begin{DoxyReturn}{Returns}
+true if none of the bits are set, false otherwise 
+\end{DoxyReturn}
+\Hypertarget{class_dynamic_bit_set_aac3314a08fb144a19d4de45c4a072774}\label{class_dynamic_bit_set_aac3314a08fb144a19d4de45c4a072774} 
+\index{DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}!operator=@{operator=}}
+\index{operator=@{operator=}!DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}}
+\doxysubsubsection{\texorpdfstring{operator=()}{operator=()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily template$<$\mbox{\hyperlink{concept_unsigned_integer}{Unsigned\+Integer}} T$>$ \\
+\mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}} \& \mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}}$<$ T $>$\+::operator= (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}}$<$ T $>$ \&}]{other }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+Copy assignment operator 
+\begin{DoxyParams}{Parameters}
+{\em other} & Other \doxylink{class_dynamic_bit_set}{Dynamic\+Bit\+Set} instance to copy from \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+Reference to the current instance (self) 
+\end{DoxyReturn}
+\Hypertarget{class_dynamic_bit_set_a99538ddf4c464f9b8f22b82c09df34d8}\label{class_dynamic_bit_set_a99538ddf4c464f9b8f22b82c09df34d8} 
+\index{DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}!operator=@{operator=}}
+\index{operator=@{operator=}!DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}}
+\doxysubsubsection{\texorpdfstring{operator=()}{operator=()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily template$<$\mbox{\hyperlink{concept_unsigned_integer}{Unsigned\+Integer}} T$>$ \\
+\mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}} \& \mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}}$<$ T $>$\+::operator= (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}}$<$ T $>$ \&\&}]{other }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [noexcept]}}
+
+Move assignment operator 
+\begin{DoxyParams}{Parameters}
+{\em other} & Other \doxylink{class_dynamic_bit_set}{Dynamic\+Bit\+Set} instance to move from \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+Reference to the current instance (self) 
+\end{DoxyReturn}
+\Hypertarget{class_dynamic_bit_set_a173ec7469892d66ca7fb65deb6b57336}\label{class_dynamic_bit_set_a173ec7469892d66ca7fb65deb6b57336} 
+\index{DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}!operator\mbox{[}\mbox{]}@{operator[]}}
+\index{operator\mbox{[}\mbox{]}@{operator[]}!DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}}
+\doxysubsubsection{\texorpdfstring{operator[]()}{operator[]()}}
+{\footnotesize\ttfamily template$<$\mbox{\hyperlink{concept_unsigned_integer}{Unsigned\+Integer}} T$>$ \\
+bool \mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}}$<$ T $>$\+::operator\mbox{[}$\,$\mbox{]} (\begin{DoxyParamCaption}\item[{const uint64\+\_\+t \&}]{index }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+Returns the value of the bit at the specified index 
+\begin{DoxyParams}{Parameters}
+{\em index} & Index of the bit to retrieve (bit index) \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+Value of the bit at the specified index (bit value) 
+\end{DoxyReturn}
+\Hypertarget{class_dynamic_bit_set_acabb565c82dab93751840122555c1a64}\label{class_dynamic_bit_set_acabb565c82dab93751840122555c1a64} 
+\index{DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}!popBackBit@{popBackBit}}
+\index{popBackBit@{popBackBit}!DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}}
+\doxysubsubsection{\texorpdfstring{popBackBit()}{popBackBit()}}
+{\footnotesize\ttfamily template$<$\mbox{\hyperlink{concept_unsigned_integer}{Unsigned\+Integer}} T$>$ \\
+void \mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}}$<$ T $>$\+::pop\+Back\+Bit (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+Removes the last bit from the bitset \Hypertarget{class_dynamic_bit_set_a76ef8c469b6e433fc29e0b722d40e344}\label{class_dynamic_bit_set_a76ef8c469b6e433fc29e0b722d40e344} 
+\index{DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}!popBackChunk@{popBackChunk}}
+\index{popBackChunk@{popBackChunk}!DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}}
+\doxysubsubsection{\texorpdfstring{popBackChunk()}{popBackChunk()}}
+{\footnotesize\ttfamily template$<$\mbox{\hyperlink{concept_unsigned_integer}{Unsigned\+Integer}} T$>$ \\
+void \mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}}$<$ T $>$\+::pop\+Back\+Chunk (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+Removes the last chunk from the bitset, adjusting the size to the nearest lower multiple of sizeof(\+T). \mbox{[}e.\+g. 65 bits -\/\texorpdfstring{$>$}{>} 64 bits -\/\texorpdfstring{$>$}{>} 56 bits\mbox{]} \Hypertarget{class_dynamic_bit_set_a402cf5fc2efded82442017aa54d1fe87}\label{class_dynamic_bit_set_a402cf5fc2efded82442017aa54d1fe87} 
+\index{DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}!pushBackBit@{pushBackBit}}
+\index{pushBackBit@{pushBackBit}!DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}}
+\doxysubsubsection{\texorpdfstring{pushBackBit()}{pushBackBit()}}
+{\footnotesize\ttfamily template$<$\mbox{\hyperlink{concept_unsigned_integer}{Unsigned\+Integer}} T$>$ \\
+void \mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}}$<$ T $>$\+::push\+Back\+Bit (\begin{DoxyParamCaption}\item[{const bool \&}]{value }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+Pushes back a bit to the bitset 
+\begin{DoxyParams}{Parameters}
+{\em value} & Value of the bit to append (bit value) \\
+\hline
+\end{DoxyParams}
+\Hypertarget{class_dynamic_bit_set_adf571f86206a8aa7e04e1c2d19e83508}\label{class_dynamic_bit_set_adf571f86206a8aa7e04e1c2d19e83508} 
+\index{DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}!pushBackChunk@{pushBackChunk}}
+\index{pushBackChunk@{pushBackChunk}!DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}}
+\doxysubsubsection{\texorpdfstring{pushBackChunk()}{pushBackChunk()}}
+{\footnotesize\ttfamily template$<$\mbox{\hyperlink{concept_unsigned_integer}{Unsigned\+Integer}} T$>$ \\
+void \mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}}$<$ T $>$\+::push\+Back\+Chunk (\begin{DoxyParamCaption}\item[{const T \&}]{chunk }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+Pushes back a chunk to the bitset, adjusting the size to the nearest multiple of sizeof(\+T) upwards. The bits in the expanded area may be initialized by previous calls, but their values are not explicitly defined by this function. 
+\begin{DoxyParams}{Parameters}
+{\em chunk} & The chunk to push back (chunk value) \\
+\hline
+\end{DoxyParams}
+\Hypertarget{class_dynamic_bit_set_a22ee4b69ce8a0081e2081cb3292a8aa2}\label{class_dynamic_bit_set_a22ee4b69ce8a0081e2081cb3292a8aa2} 
+\index{DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}!reserve@{reserve}}
+\index{reserve@{reserve}!DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}}
+\doxysubsubsection{\texorpdfstring{reserve()}{reserve()}}
+{\footnotesize\ttfamily template$<$\mbox{\hyperlink{concept_unsigned_integer}{Unsigned\+Integer}} T$>$ \\
+void \mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}}$<$ T $>$\+::reserve (\begin{DoxyParamCaption}\item[{const uint64\+\_\+t \&}]{reserve\+\_\+size }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+Reserves the specified size for the bitset 
+\begin{DoxyParams}{Parameters}
+{\em reserve\+\_\+size} & The size to reserve for the bitset (bit size) \\
+\hline
+\end{DoxyParams}
+\Hypertarget{class_dynamic_bit_set_acb71c18a014a54d522b7a13674ffcb45}\label{class_dynamic_bit_set_acb71c18a014a54d522b7a13674ffcb45} 
+\index{DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}!resize@{resize}}
+\index{resize@{resize}!DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}}
+\doxysubsubsection{\texorpdfstring{resize()}{resize()}}
+{\footnotesize\ttfamily template$<$\mbox{\hyperlink{concept_unsigned_integer}{Unsigned\+Integer}} T$>$ \\
+void \mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}}$<$ T $>$\+::resize (\begin{DoxyParamCaption}\item[{const uint64\+\_\+t \&}]{new\+\_\+size }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+Resizes the bitset to the specified size 
+\begin{DoxyParams}{Parameters}
+{\em new\+\_\+size} & The new size of the bitset (bit size) \\
+\hline
+\end{DoxyParams}
+\Hypertarget{class_dynamic_bit_set_a68d38a3bdfa2ecbf6b643d95a4a91a72}\label{class_dynamic_bit_set_a68d38a3bdfa2ecbf6b643d95a4a91a72} 
+\index{DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}!setAll@{setAll}}
+\index{setAll@{setAll}!DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}}
+\doxysubsubsection{\texorpdfstring{setAll()}{setAll()}}
+{\footnotesize\ttfamily template$<$\mbox{\hyperlink{concept_unsigned_integer}{Unsigned\+Integer}} T$>$ \\
+void \mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}}$<$ T $>$\+::set\+All (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+Fills all the bits with 1 (true) \Hypertarget{class_dynamic_bit_set_a9cda8c683d5e82b7d1ebc68f2e38e087}\label{class_dynamic_bit_set_a9cda8c683d5e82b7d1ebc68f2e38e087} 
+\index{DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}!setBit@{setBit}}
+\index{setBit@{setBit}!DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}}
+\doxysubsubsection{\texorpdfstring{setBit()}{setBit()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily template$<$\mbox{\hyperlink{concept_unsigned_integer}{Unsigned\+Integer}} T$>$ \\
+void \mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}}$<$ T $>$\+::set\+Bit (\begin{DoxyParamCaption}\item[{const bool \&}]{value,  }\item[{const uint64\+\_\+t \&}]{index }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+Sets the bit at the specified index to the specified value 
+\begin{DoxyParams}{Parameters}
+{\em value} & Value to set the bit to (bit value) \\
+\hline
+{\em index} & Index of the bit to set (bit index) \\
+\hline
+\end{DoxyParams}
+\Hypertarget{class_dynamic_bit_set_ac5be0ec473058776299d068eaaa65ad5}\label{class_dynamic_bit_set_ac5be0ec473058776299d068eaaa65ad5} 
+\index{DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}!setBit@{setBit}}
+\index{setBit@{setBit}!DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}}
+\doxysubsubsection{\texorpdfstring{setBit()}{setBit()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily template$<$\mbox{\hyperlink{concept_unsigned_integer}{Unsigned\+Integer}} T$>$ \\
+void \mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}}$<$ T $>$\+::set\+Bit (\begin{DoxyParamCaption}\item[{const uint64\+\_\+t \&}]{index }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+Sets the bit at the specified index to 1 (true) 
+\begin{DoxyParams}{Parameters}
+{\em index} & Index of the bit to set (bit index) \\
+\hline
+\end{DoxyParams}
+\Hypertarget{class_dynamic_bit_set_a37034ce8ab979fb95eb7ad866be9ae04}\label{class_dynamic_bit_set_a37034ce8ab979fb95eb7ad866be9ae04} 
+\index{DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}!setChunk@{setChunk}}
+\index{setChunk@{setChunk}!DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}}
+\doxysubsubsection{\texorpdfstring{setChunk()}{setChunk()}}
+{\footnotesize\ttfamily template$<$\mbox{\hyperlink{concept_unsigned_integer}{Unsigned\+Integer}} T$>$ \\
+void \mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}}$<$ T $>$\+::set\+Chunk (\begin{DoxyParamCaption}\item[{const T \&}]{chunk,  }\item[{const uint64\+\_\+t \&}]{index }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+Sets the chunk at the specified index to the specified value 
+\begin{DoxyParams}{Parameters}
+{\em chunk} & Chunk to set (chunk value) \\
+\hline
+{\em index} & Index of the chunk to set (chunk index) \\
+\hline
+\end{DoxyParams}
+\Hypertarget{class_dynamic_bit_set_af5f22e733bd8dc1fd4b17834fe76a342}\label{class_dynamic_bit_set_af5f22e733bd8dc1fd4b17834fe76a342} 
+\index{DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}!setInRange@{setInRange}}
+\index{setInRange@{setInRange}!DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}}
+\doxysubsubsection{\texorpdfstring{setInRange()}{setInRange()}\hspace{0.1cm}{\footnotesize\ttfamily [1/3]}}
+{\footnotesize\ttfamily template$<$\mbox{\hyperlink{concept_unsigned_integer}{Unsigned\+Integer}} T$>$ \\
+void \mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}}$<$ T $>$\+::set\+In\+Range (\begin{DoxyParamCaption}\item[{const uint64\+\_\+t \&}]{begin,  }\item[{const uint64\+\_\+t \&}]{end }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+Fills all the bits in the specified range with 1 (true) 
+\begin{DoxyParams}{Parameters}
+{\em begin} & Begin of the range to fill (bit index) \\
+\hline
+{\em end} & End of the range to fill (bit index) \\
+\hline
+\end{DoxyParams}
+\Hypertarget{class_dynamic_bit_set_a3c7cb965067f8ebb5145c82c596b6027}\label{class_dynamic_bit_set_a3c7cb965067f8ebb5145c82c596b6027} 
+\index{DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}!setInRange@{setInRange}}
+\index{setInRange@{setInRange}!DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}}
+\doxysubsubsection{\texorpdfstring{setInRange()}{setInRange()}\hspace{0.1cm}{\footnotesize\ttfamily [2/3]}}
+{\footnotesize\ttfamily template$<$\mbox{\hyperlink{concept_unsigned_integer}{Unsigned\+Integer}} T$>$ \\
+void \mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}}$<$ T $>$\+::set\+In\+Range (\begin{DoxyParamCaption}\item[{const uint64\+\_\+t \&}]{begin,  }\item[{const uint64\+\_\+t \&}]{end,  }\item[{const uint64\+\_\+t \&}]{step }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+Fills all the bits in the specified range with 1 (true) 
+\begin{DoxyParams}{Parameters}
+{\em begin} & Begin of the range to fill (bit index) \\
+\hline
+{\em end} & End of the range to fill (bit index) \\
+\hline
+{\em step} & Step size between the bits to fill (bit step) \\
+\hline
+\end{DoxyParams}
+\Hypertarget{class_dynamic_bit_set_a89e605f9daf28db918cec3db475a42f4}\label{class_dynamic_bit_set_a89e605f9daf28db918cec3db475a42f4} 
+\index{DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}!setInRange@{setInRange}}
+\index{setInRange@{setInRange}!DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}}
+\doxysubsubsection{\texorpdfstring{setInRange()}{setInRange()}\hspace{0.1cm}{\footnotesize\ttfamily [3/3]}}
+{\footnotesize\ttfamily template$<$\mbox{\hyperlink{concept_unsigned_integer}{Unsigned\+Integer}} T$>$ \\
+void \mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}}$<$ T $>$\+::set\+In\+Range (\begin{DoxyParamCaption}\item[{const uint64\+\_\+t \&}]{end }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+Fills all the bits in the specified range with 1 (true) 
+\begin{DoxyParams}{Parameters}
+{\em end} & End of the range to fill (bit index) \\
+\hline
+\end{DoxyParams}
+\Hypertarget{class_dynamic_bit_set_a089b53aa29e2b25b4d7b608724616a0d}\label{class_dynamic_bit_set_a089b53aa29e2b25b4d7b608724616a0d} 
+\index{DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}!setInRangeFastest@{setInRangeFastest}}
+\index{setInRangeFastest@{setInRangeFastest}!DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}}
+\doxysubsubsection{\texorpdfstring{setInRangeFastest()}{setInRangeFastest()}}
+{\footnotesize\ttfamily template$<$\mbox{\hyperlink{concept_unsigned_integer}{Unsigned\+Integer}} T$>$ \\
+void \mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}}$<$ T $>$\+::set\+In\+Range\+Fastest (\begin{DoxyParamCaption}\item[{const bool \&}]{value,  }\item[{const uint64\+\_\+t \&}]{begin,  }\item[{const uint64\+\_\+t \&}]{end,  }\item[{const uint64\+\_\+t \&}]{step }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+!!! W.\+I.\+P. -\/ May not choose the best option, not even talking about the fact that set\+\_\+in\+\_\+range\+\_\+optimized function doesn\textquotesingle{}t even work correctly !!!~\newline
+Fill the bits in the specified range with the specified value.~\newline
+Chooses the fastest implementation based on the step.~\newline
+This function becomes more accurate in choosing the fastest implementation as the size of the bitset increases.~\newline
+
+\begin{DoxyParams}{Parameters}
+{\em value} & Value to fill the bits with \\
+\hline
+{\em begin} & Begin of the range to fill (bit index) \\
+\hline
+{\em end} & End of the range to fill (bit index) \\
+\hline
+{\em step} & Step size between the bits to fill \\
+\hline
+\end{DoxyParams}
+
+
+\doxysubsection{Member Data Documentation}
+\Hypertarget{class_dynamic_bit_set_ac81e39b121d222846a5dde32adf833b9}\label{class_dynamic_bit_set_ac81e39b121d222846a5dde32adf833b9} 
+\index{DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}!chunk\_size@{chunk\_size}}
+\index{chunk\_size@{chunk\_size}!DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}}
+\doxysubsubsection{\texorpdfstring{chunk\_size}{chunk\_size}}
+{\footnotesize\ttfamily template$<$\mbox{\hyperlink{concept_unsigned_integer}{Unsigned\+Integer}} T$>$ \\
+constexpr uint16\+\_\+t \mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}}$<$ T $>$\+::chunk\+\_\+size = sizeof(T) \texorpdfstring{$\ast$}{*} 8\hspace{0.3cm}{\ttfamily [static]}, {\ttfamily [constexpr]}}
+
+Bit-\/length of the underlying type \Hypertarget{class_dynamic_bit_set_a7c8ae59284ab5322a1046dd90163cff1}\label{class_dynamic_bit_set_a7c8ae59284ab5322a1046dd90163cff1} 
+\index{DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}!data@{data}}
+\index{data@{data}!DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}}
+\doxysubsubsection{\texorpdfstring{data}{data}}
+{\footnotesize\ttfamily template$<$\mbox{\hyperlink{concept_unsigned_integer}{Unsigned\+Integer}} T$>$ \\
+T\texorpdfstring{$\ast$}{*} \mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}}$<$ T $>$\+::data}
+
+Underlying array of chunks containing the bits \Hypertarget{class_dynamic_bit_set_a12d63eae79f9dc133c7b4e9edbcc88aa}\label{class_dynamic_bit_set_a12d63eae79f9dc133c7b4e9edbcc88aa} 
+\index{DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}!size@{size}}
+\index{size@{size}!DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}}
+\doxysubsubsection{\texorpdfstring{size}{size}}
+{\footnotesize\ttfamily template$<$\mbox{\hyperlink{concept_unsigned_integer}{Unsigned\+Integer}} T$>$ \\
+uint64\+\_\+t \mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}}$<$ T $>$\+::size}
+
+Size of the bitset in bits \Hypertarget{class_dynamic_bit_set_a91d3b070a83f58cf5a1bca11c3ebdae0}\label{class_dynamic_bit_set_a91d3b070a83f58cf5a1bca11c3ebdae0} 
+\index{DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}!storage\_size@{storage\_size}}
+\index{storage\_size@{storage\_size}!DynamicBitSet$<$ T $>$@{DynamicBitSet$<$ T $>$}}
+\doxysubsubsection{\texorpdfstring{storage\_size}{storage\_size}}
+{\footnotesize\ttfamily template$<$\mbox{\hyperlink{concept_unsigned_integer}{Unsigned\+Integer}} T$>$ \\
+uint64\+\_\+t \mbox{\hyperlink{class_dynamic_bit_set}{Dynamic\+Bit\+Set}}$<$ T $>$\+::storage\+\_\+size}
+
+Amount of chunks the bitset is utilizing 
