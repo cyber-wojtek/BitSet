@@ -1,6 +1,6 @@
-# BitSet Class for C, C++ and Python
+# BitSet Classes for C, C++ and Python
 
-This project implements an efficient BitSet Class for C, C++ and Python.
+This project implements an efficient BitSet Classes for C, C++ and Python.
 
 Note: This project aims to be the most efficient and performant, prioritizing performance over user-friendliness. None of the data members are private/protected for the sake of efficiency, and this will not change across the project.
 
