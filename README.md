@@ -14,8 +14,8 @@ Note: This project aims to be the most efficient and performant, prioritizing pe
 
 The documentation for this project can be found in the following locations:
 
-- Documentation/Usage examples
-- Tutorials
+- API Reference/Usage Examples
+- Tutorial
 
 ## Contributing
 
