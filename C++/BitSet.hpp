@@ -1098,6 +1098,16 @@ public:
     }
 
     /**
+	 * Retrieves the value of the bit at the specified index
+	 * @param index Index of the bit to retrieve (bit index)
+	 * @return Bit value at the specified index
+	 */
+    [[nodiscard]] bool getBit(const uint64_t& index) const
+    {
+        return (data[index / chunk_size] & static_cast<T>(1) << index % chunk_size) >> index % chunk_size;
+    }
+
+    /**
      * Sets the bit at the specified index to the specified value
      * @param value Value to set the bit to (bit value)
      * @param index Index of the bit to set (bit index)
@@ -1697,17 +1707,6 @@ public:
     }
 
     /**
-     * Retrieves the value of the bit at the specified index
-     * @param index Index of the bit to retrieve (bit index)
-     * @return Bit value at the specified index
-     */
-    [[nodiscard]] bool getBit(const uint64_t& index) const
-    {
-        return (data[index / chunk_size] & static_cast<T>(1) << index % chunk_size) >> index % chunk_size;
-    }
-
-
-    /**
      * Retrieves the chunk at the specified index
      * @param index Index of the chunk to retrieve (chunk index)
      * @return Chunk at the specified index
@@ -1778,14 +1777,14 @@ public:
      */
     [[nodiscard]] bool noneSet() const
     {
-        return allCleared();
+        return allClear();
     }
 
     /**
-     * Checks if all bits are cleared
-     * @return true if all bits are cleared, false otherwise
+     * Checks if all bits are clear
+     * @return true if all bits are clear, false otherwise
      */
-    [[nodiscard]] bool allCleared() const
+    [[nodiscard]] bool allClear() const
     {
         for (uint64_t i = 0; i < storage_size - (size % chunk_size ? 1 : 0); ++i)
         {
@@ -1806,7 +1805,7 @@ public:
     /**
      * @return The number of set bits
      */
-    [[nodiscard]] uint64_t countSetBits() const
+    [[nodiscard]] uint64_t countSet() const
     {
         uint64_t count = 0;
         for (uint64_t i = 0; i < storage_size; ++i)
@@ -1831,7 +1830,7 @@ public:
     }
 
     /**
-     * Returns the number of chunks the bitset would utilize for given size
+     * Calculates the number of chunks the bitset would utilize for given size
      * @param size Size of the target bitset in bits
      * @return The number of chunks the bitset would utilize for the given size
      */
