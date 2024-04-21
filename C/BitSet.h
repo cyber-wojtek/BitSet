@@ -124,7 +124,7 @@ inline void bitset_move_from(BitSet* const destination, BitSet* source)
  * @param value The value to set the bit to
  * @param index The index of the bit to modify (bit index)
  */
-inline void bitset_set_bit_value(const BitSet* const bitset, const uint64_t value, const uint64_t index) 
+inline void bitset_set_bit_value(BitSet* const bitset, const uint64_t value, const uint64_t index) 
 {
     if (value)
         *(bitset->data + index / sizeof(uint8_t)) |= 1 << index % sizeof(uint8_t);
@@ -280,7 +280,7 @@ inline void bitset_fill_in_range_begin_end(BitSet* const bitset, const bool valu
  * @param begin Begin of the range to fill (bit index)
  * @param end End of the range to fill (bit index)
  */
-inline void bitset_clear_in_range_begin_end(BitSet* const bitset, const uint64_t& begin, const uint64_t& end)
+inline void bitset_clear_in_range_begin_end(BitSet* const bitset, const uint64_t begin, const uint64_t end)
 {
     uint8_t to_add = 1, to_sub = 1;
     // create begin_chunk and fill the first byte with it
@@ -311,7 +311,7 @@ inline void bitset_clear_in_range_begin_end(BitSet* const bitset, const uint64_t
  * @param begin Begin of the range to fill (bit index)
  * @param end End of the range to fill (bit index)
  */
-inline void bitset_set_in_range_begin_end(BitSet* const bitset, const uint64_t& begin, const uint64_t& end)
+inline void bitset_set_in_range_begin_end(BitSet* const bitset, const uint64_t begin, const uint64_t end)
 {
     uint8_t to_add = 1, to_sub = 1;
     // create begin_chunk and fill the first byte with it
