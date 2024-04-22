@@ -77,7 +77,6 @@ inline std::enable_if_t<std::is_integral_v<T>, std::pair<T*, std::size_t>> prime
     T index = 1;
 
     // setting the first two elements to 'false' (not prime) and the third element to 'true' (prime).
-
     // All other even numbers are not primes (optimization), using pointer arithmetic to set bits
     primes_b.fill_chunk_in_range(0b10101010, 1, primes_b.storage_size);
     primes_b.set_chunk(0b10101100, 0);
