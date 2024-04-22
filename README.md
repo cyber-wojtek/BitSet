@@ -9,7 +9,7 @@ Note: This project aims to be the most efficient and performant, prioritizing pe
 The documentation for this project can be found in the following locations:
 
 - [API Reference](https://cyber-wojtek.github.io/index.html)
-- [Usage Examples]()
+- [Usage Examples](https://github.com/cyber-wojtek/BitSet_C_Cpp_Python/blob/main/Examples/examples.md)
 
 ## Contributing
 
