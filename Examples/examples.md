@@ -4,14 +4,13 @@ All of time measurements are measured with [example_primes_time_windows.cpp](htt
 Below is classic, efficient implementation of Sieve of Erastothenes, using bool pointer array.
 ```cpp
 template <typename T>
-inline std::enable_if_t<std::is_integral_v<T>, std::pair<T*, std::size_t>> primes_sieve_of_eratosthenes_f(const T& up_limit, const bool& use_prime_num_approx = false, const uint64_t& mem_to_alloc = 0)
+inline std::enable_if_t<std::is_integral_v<T>, std::pair<T*, std::size_t>> primes_sieve_of_eratosthenes(const T& up_limit, const bool& use_prime_num_approx = false, const uint64_t& mem_to_alloc = 0)
 {
     // If limit is less than 2, return empty array
     if (up_limit < 2)
         return {nullptr, 0};
 
     // Initialize variables
-    // use BitSet class to save memory (and time) for large limits (up to 8 times less memory usage and 8 times faster access)
     bool *primes_b = new bool[up_limit + 1];
     T primes_size = (mem_to_alloc) ? mem_to_alloc : ((use_prime_num_approx) ? static_cast<T>(up_limit / std::log(up_limit)) : up_limit);
     T* primes = new T[primes_size];
