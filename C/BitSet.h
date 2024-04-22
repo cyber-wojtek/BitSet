@@ -8,8 +8,11 @@
 // Define the structure for a bit_set
 typedef struct 
 {
-    uint8_t* data;
-    uint64_t size, storage_size;
+	/**
+	 * Underlying array of bytes containing the bits
+	 */
+	uint8_t* data;
+    uint64_t size /* Size of bit set in bits */, storage_size /* Size of bit set in bytes */;
 } BitSet;
 
 inline void bit_set_init(BitSet* const bit_set, const uint64_t size);
@@ -64,9 +67,9 @@ inline const uint64_t bit_set_calculate_storage_size(const uint64_t size);
 
 /**
  * Size initialization
- * @param bit_set The bit_set to initialize
- * @param size The size of the bit_set to be initialized
- * @struct BitSet
+ * @param bit_set The bitset to initialize
+ * @param size The size of the bitset to be initialized
+ * @memberof BitSet
  */
 inline void bit_set_init(BitSet* const bit_set, const uint64_t size) 
 {
@@ -78,10 +81,10 @@ inline void bit_set_init(BitSet* const bit_set, const uint64_t size)
 
 /**
  * Size and value initialization
- * @param bit_set The bit_set to initialize
- * @param size The size of the bit_set to be initialized
- * @param value The value to fill the bit_set with
- * @struct BitSet
+ * @param bit_set The bitset to initialize
+ * @param size The size of the bitset to be initialized
+ * @param value The value to fill the bitset with
+ * @memberof BitSet
  */
 inline void bit_set_init_with_value(BitSet* const bit_set, const uint64_t size, const uint64_t value) 
 {
@@ -92,9 +95,9 @@ inline void bit_set_init_with_value(BitSet* const bit_set, const uint64_t size, 
 }
 
 /**
- * Destroys the bit_set (frees the memory)
- * @param bit_set The bit_set to destroy
- * @struct BitSet
+ * Destroys the bitset (frees the memory)
+ * @param bit_set The bitset to destroy
+ * @memberof BitSet
  */
 inline void bit_set_destroy(const BitSet* const bit_set) 
 {
@@ -102,10 +105,10 @@ inline void bit_set_destroy(const BitSet* const bit_set)
 }
 
 /**
- * Copies the data from one bit_set to another
- * @param destination The bit_set to copy to
- * @param source The bit_set to copy from
- * @struct BitSet
+ * Copies the data from one bitset to another
+ * @param destination The bitset to copy to
+ * @param source The bitset to copy from
+ * @memberof BitSet
  */
 inline void bit_set_copy_from(BitSet* const destination, const BitSet* const source) 
 {
@@ -114,10 +117,10 @@ inline void bit_set_copy_from(BitSet* const destination, const BitSet* const sou
 }
 
 /**
- * Moves the data from one bit_set to another
- * @param destination The bit_set to move to
- * @param source The bit_set to move from
- * @struct BitSet
+ * Moves the data from one bitset to another
+ * @param destination The bitset to move to
+ * @param source The bitset to move from
+ * @memberof BitSet
  */
 inline void bit_set_move_from(BitSet* const destination, BitSet* source) 
 {
@@ -129,10 +132,10 @@ inline void bit_set_move_from(BitSet* const destination, BitSet* source)
 
 /**
  * Sets the value of a bit at a specified index
- * @param bit_set The bit_set to modify
+ * @param bit_set The bitset to modify
  * @param value The value to set the bit to
  * @param index The index of the bit to modify (bit index)
- * @struct BitSet
+ * @memberof BitSet
  */
 inline void bit_set_set_value(const BitSet* const bit_set, const uint64_t value, const uint64_t index) 
 {
@@ -144,10 +147,10 @@ inline void bit_set_set_value(const BitSet* const bit_set, const uint64_t value,
 
 /**
  * Retrieves the value of a bit at a specified index
- * @param bit_set The bit_set to read from
+ * @param bit_set The bitset to read from
  * @param index The index of the bit to read (bit index)
  * @return The value of the bit at the specified index
- * @struct BitSet
+ * @memberof BitSet
  */
 inline bool bit_set_get(const BitSet* const bit_set, const uint64_t index) {
     return (*(bit_set->data + index / 8u) & 1 << index % 8u) >> index % 8u;
@@ -155,9 +158,9 @@ inline bool bit_set_get(const BitSet* const bit_set, const uint64_t index) {
 
 /**
  * Sets the value of a bit at a specified index to 1 (true)
- * @param bit_set The bit_set to modify
+ * @param bit_set The bitset to modify
  * @param index The index of the bit to set (bit index)
- * @struct BitSet
+ * @memberof BitSet
  */
 inline void bit_set_set(BitSet* const bit_set, const uint64_t index) {
     *(bit_set->data + index / sizeof(uint8_t)) |= 1 << index % sizeof(uint8_t);
@@ -165,19 +168,19 @@ inline void bit_set_set(BitSet* const bit_set, const uint64_t index) {
 
 /**
  * Sets the value of a bit at a specified index to 0 (false)
- * @param bit_set The bit_set to modify
+ * @param bit_set The bitset to modify
  * @param index The index of the bit to clear (bit index)
- * @struct BitSet
+ * @memberof BitSet
  */
 inline void bit_set_clear(BitSet* const bit_set, const uint64_t index) {
     *(bit_set->data + index / sizeof(uint8_t)) &= ~(1 << index % sizeof(uint8_t));
 }
 
 /**
- * Fills the bit_set with a specified value
- * @param bit_set The bit_set to modify
- * @param value The value to fill the bit_set with
- * @struct BitSet
+ * Fills the bitset with a specified value
+ * @param bit_set The bitset to modify
+ * @param value The value to fill the bitset with
+ * @memberof BitSet
  */
 inline void bit_set_fill_all(BitSet* const bit_set, const bool value) {
     const uint8_t chunk = value ? 255u : 0u;
@@ -187,8 +190,8 @@ inline void bit_set_fill_all(BitSet* const bit_set, const bool value) {
 
 /**
  * Clears all the bits (sets all bits to 0)
- * @param bit_set The bit_set to modify
- * @struct BitSet
+ * @param bit_set The bitset to modify
+ * @memberof BitSet
  */
 inline void bit_set_clear_all(BitSet* const bit_set) {
     memset(bit_set->data, 0, bit_set->storage_size);
@@ -196,8 +199,8 @@ inline void bit_set_clear_all(BitSet* const bit_set) {
 
 /**
  * Sets all the bits (sets all bits to 1)
- * @param bit_set The bit_set to modify
- * @struct BitSet
+ * @param bit_set The bitset to modify
+ * @memberof BitSet
  */
 inline void bit_set_set_all(BitSet* const bit_set) {
     memset(bit_set->data, 255, bit_set->storage_size);
@@ -205,10 +208,10 @@ inline void bit_set_set_all(BitSet* const bit_set) {
 
 /**
  * Fills all the bits in the specified range with 1 (true)
- * @param bit_set The bit_set to modify
+ * @param bit_set The bitset to modify
  * @param value The value to fill the bits with (bit value)
  * @param end End of the range to fill (bit index)
- * @struct BitSet
+ * @memberof BitSet
  */
 inline void bit_set_fill_in_range_end(BitSet* const bit_set, const bool value, const uint64_t end) {
     for (uint64_t i = 0; i < end; ++i)
@@ -217,9 +220,9 @@ inline void bit_set_fill_in_range_end(BitSet* const bit_set, const bool value, c
 
 /**
  * Fills all the bits in the specified range with 0 (false)
- * @param bit_set The bit_set to modify
+ * @param bit_set The bitset to modify
  * @param end End of the range to fill (bit index)
- * @struct BitSet
+ * @memberof BitSet
  */
 inline void bit_set_clear_in_range(BitSet* const bit_set, const uint64_t end)
 {
@@ -233,9 +236,9 @@ inline void bit_set_clear_in_range(BitSet* const bit_set, const uint64_t end)
 
 /**
  * Fills all the bits in the specified range with 1 (true)
- * @param bit_set The bit_set to modify
+ * @param bit_set The bitset to modify
  * @param end End of the range to fill (bit index)
- * @struct BitSet
+ * @memberof BitSet
  */
 inline void bit_set_set_in_range(BitSet* const bit_set, const uint64_t end)
 {
@@ -249,11 +252,11 @@ inline void bit_set_set_in_range(BitSet* const bit_set, const uint64_t end)
 
 /**
  * Fills all the bits in the specified range with the specified value
- * @param bit_set The bit_set to modify
+ * @param bit_set The bitset to modify
  * @param value Value to fill the bits with (bit value)
  * @param begin Begin of the range to fill (bit index)
  * @param end End of the range to fill (bit index)
- * @struct BitSet
+ * @memberof BitSet
  */
 inline void bit_set_fill_in_range_begin_end(BitSet* const bit_set, const bool value, const uint64_t begin, const uint64_t end)
 {
@@ -296,10 +299,10 @@ inline void bit_set_fill_in_range_begin_end(BitSet* const bit_set, const bool va
 
 /**
  * Fills all the bits in the specified range with 0 (false)
- * @param bit_set The bit_set to modify
+ * @param bit_set The bitset to modify
  * @param begin Begin of the range to fill (bit index)
  * @param end End of the range to fill (bit index)
- * @struct BitSet
+ * @memberof BitSet
  */
 inline void bit_set_clear_in_range_begin_end(BitSet* const bit_set, const uint64_t& begin, const uint64_t& end)
 {
@@ -328,10 +331,10 @@ inline void bit_set_clear_in_range_begin_end(BitSet* const bit_set, const uint64
 
 /**
  * Fills all the bits in the specified range with 1 (true)
- * @param bit_set The bit_set to modify
+ * @param bit_set The bitset to modify
  * @param begin Begin of the range to fill (bit index)
  * @param end End of the range to fill (bit index)
- * @struct BitSet
+ * @memberof BitSet
  */
 inline void bit_set_set_in_range_begin_end(BitSet* const bit_set, const uint64_t& begin, const uint64_t& end)
 {
@@ -360,12 +363,12 @@ inline void bit_set_set_in_range_begin_end(BitSet* const bit_set, const uint64_t
 
 /**
  * Fills all the bits in the specified range with the specified value
- * @param bit_set The bit_set to modify
+ * @param bit_set The bitset to modify
  * @param value Value to fill the bits with (bit value)
  * @param begin Begin of the range to fill (bit index)
  * @param end End of the range to fill (bit index)
  * @param step Step size between the bits to fill (bit step)
- * @struct BitSet
+ * @memberof BitSet
  */
 inline void bit_set_fill_in_range_begin_end_step(BitSet* const bit_set, const bool value, const uint64_t begin, const uint64_t end, const uint64_t step)
 {
@@ -380,11 +383,11 @@ inline void bit_set_fill_in_range_begin_end_step(BitSet* const bit_set, const bo
 
 /**
  * Fills all the bits in the specified range with 0 (false
- * @param bit_set The bit_set to modify
+ * @param bit_set The bitset to modify
  * @param begin Begin of the range to fill (bit index)
  * @param end End of the range to fill (bit index)
  * @param step Step size between the bits to fill (bit step)
- * @struct BitSet
+ * @memberof BitSet
  */
 inline void bit_set_clear_in_range_begin_end_step(BitSet* const bit_set, const uint64_t begin, const uint64_t end, const uint64_t step)
 {
@@ -394,12 +397,12 @@ inline void bit_set_clear_in_range_begin_end_step(BitSet* const bit_set, const u
 
 /**
  * Fills all the bits in the specified range with 1 (true)
- * @param bit_set The bit_set to modify
+ * @param bit_set The bitset to modify
  * @param value Value to fill the bits with (bit value)
  * @param begin Begin of the range to fill (bit index)
  * @param end End of the range to fill (bit index)
  * @param step Step size between the bits to fill (bit step)
- * @struct BitSet
+ * @memberof BitSet
  */
 inline void bit_set_set_in_range_begin_end_step(BitSet* const bit_set, const uint64_t begin, const uint64_t end, const uint64_t step)
 {
@@ -409,10 +412,10 @@ inline void bit_set_set_in_range_begin_end_step(BitSet* const bit_set, const uin
 
 /**
  * Sets the chunk at the specified index to the specified value
- * @param bit_set The bit_set to modify
+ * @param bit_set The bitset to modify
  * @param chunk The chunk to set (chunk value)
  * @param index The index of the chunk to set (chunk index)
- * @struct BitSet
+ * @memberof BitSet
  */
 inline void bit_set_set_chunk(BitSet* const bit_set, const uint8_t chunk, const uint64_t index)
 {
@@ -421,9 +424,9 @@ inline void bit_set_set_chunk(BitSet* const bit_set, const uint8_t chunk, const 
 
 /**
  * Fills all the chunks in the specified range with the specified value
- * @param bit_set The bit_set to modify
+ * @param bit_set The bitset to modify
  * @param value The value to fill the bits with (chunk value)
- * @struct BitSet
+ * @memberof BitSet
  */
 inline void bit_set_fill_all_chunks(BitSet* const bit_set, const uint8_t value)
 {
@@ -433,10 +436,10 @@ inline void bit_set_fill_all_chunks(BitSet* const bit_set, const uint8_t value)
 
 /**
  * Fills all the bits in the specified range with the specified chunk
- * @param bit_set The bit_set to modify
+ * @param bit_set The bitset to modify
  * @param chunk Chunk to fill the bits with (chunk value)
  * @param end End of the range to fill (chunk index)
- * @struct BitSet
+ * @memberof BitSet
  */
 inline void bit_set_fill_chunk_in_range_end(BitSet* const bit_set, const uint8_t chunk, const uint64_t end)
 {
@@ -446,11 +449,11 @@ inline void bit_set_fill_chunk_in_range_end(BitSet* const bit_set, const uint8_t
 
 /**
  * Fills all the bits in the specified range with the specified chunk
- * @param bit_set The bit_set to modify
+ * @param bit_set The bitset to modify
  * @param chunk Chunk to fill the bits with
  * @param begin begin of the range to fill (chunk index)
  * @param end End of the range to fill (chunk index)
- * @struct BitSet
+ * @memberof BitSet
  */
 inline void bit_set_fill_chunk_in_range_begin_end(BitSet* const bit_set, const uint8_t chunk, const uint64_t begin, const uint64_t end)
 {
@@ -460,12 +463,12 @@ inline void bit_set_fill_chunk_in_range_begin_end(BitSet* const bit_set, const u
 
 /**
  * Fills all the bits in the specified range with the specified chunk
- * @param bit_set The bit_set to modify
+ * @param bit_set The bitset to modify
  * @param chunk Chunk to fill the bits with (chunk value)
  * @param begin begin of the range to fill (chunk index)
  * @param end End of the range to fill (chunk index)
  * @param step Step size between the bits to fill (chunk step)
- * @struct BitSet
+ * @memberof BitSet
  */
 inline void bit_set_fill_chunk_in_range_begin_end_step(BitSet* const bit_set, const uint8_t chunk, const uint64_t begin, const uint64_t end, const uint64_t step)
 {
@@ -475,9 +478,9 @@ inline void bit_set_fill_chunk_in_range_begin_end_step(BitSet* const bit_set, co
 
 /**
  * Flips the bit at the specified index
- * @param bit_set The bit_set to modify
+ * @param bit_set The bitset to modify
  * @param index Index of the bit to flip (bit index)
- * @struct BitSet
+ * @memberof BitSet
  */
 inline void bit_set_flip_bit(BitSet* const bit_set, const uint64_t index)
 {
@@ -486,8 +489,8 @@ inline void bit_set_flip_bit(BitSet* const bit_set, const uint64_t index)
 
 /**
  * Flips all the bits
- * @param bit_set The bit_set to modify
- * @struct BitSet
+ * @param bit_set The bitset to modify
+ * @memberof BitSet
  */
 inline void bit_set_flip_all(BitSet* const bit_set)
 {
@@ -497,9 +500,9 @@ inline void bit_set_flip_all(BitSet* const bit_set)
 
 /**
  * Flips all the bits in the specified range
- * @param bit_set The bit_set to modify
+ * @param bit_set The bitset to modify
  * @param end End of the range to flip (bit index)
- * @struct BitSet
+ * @memberof BitSet
  */
 inline void bit_set_flip_in_range_end(BitSet* const bit_set, const uint64_t end)
 {
@@ -509,10 +512,10 @@ inline void bit_set_flip_in_range_end(BitSet* const bit_set, const uint64_t end)
 
 /**
  * Flips all the bits in the specified range
- * @param bit_set The bit_set to modify
+ * @param bit_set The bitset to modify
  * @param begin Begin of the range to flip (bit index)
  * @param end End of the range to flip (bit index)
- * @struct BitSet
+ * @memberof BitSet
  */
 inline void bit_set_flip_in_range_begin_end(BitSet* const bit_set, const uint64_t begin, const uint64_t end)
 {
@@ -522,11 +525,11 @@ inline void bit_set_flip_in_range_begin_end(BitSet* const bit_set, const uint64_
 
 /**
  * Flips all the bits in the specified range
- * @param bit_set The bit_set to modify
+ * @param bit_set The bitset to modify
  * @param begin Begin of the range to flip (bit index)
  * @param end End of the range to flip (bit index)
  * @param step Step size between the bits to flip (bit step)
- * @struct BitSet
+ * @memberof BitSet
  */
 inline void bit_set_flip_in_range_begin_end_step(BitSet* const bit_set, const uint64_t begin, const uint64_t end, const uint64_t step)
 {
@@ -536,9 +539,9 @@ inline void bit_set_flip_in_range_begin_end_step(BitSet* const bit_set, const ui
 
 /**
  * Flips the chunk at the specified index
- * @param bit_set The bit_set to modify
+ * @param bit_set The bitset to modify
  * @param index Index of the chunk to flip (chunk index)
- * @struct BitSet
+ * @memberof BitSet
  */
 inline void bit_set_flip_chunk(BitSet* const bit_set, const uint64_t index)
 {
@@ -547,8 +550,8 @@ inline void bit_set_flip_chunk(BitSet* const bit_set, const uint64_t index)
 
 /**
  * Flips all the chunks (exactly the same as bit_set_flip_all, just alias)
- * @param bit_set The bit_set to modify
- * @struct BitSet
+ * @param bit_set The bitset to modify
+ * @memberof BitSet
  */
 inline void bit_set_flip_chunk_all(BitSet* const bit_set)
 {
@@ -557,9 +560,9 @@ inline void bit_set_flip_chunk_all(BitSet* const bit_set)
 
 /**
  * Flips all the chunks in the specified range
- * @param bit_set The bit_set to modify
+ * @param bit_set The bitset to modify
  * @param end End of the range to flip (chunk index)
- * @struct BitSet
+ * @memberof BitSet
  */
 inline void bit_set_flip_chunk_in_range_end(BitSet* const bit_set, const uint64_t end)
 {
@@ -569,10 +572,10 @@ inline void bit_set_flip_chunk_in_range_end(BitSet* const bit_set, const uint64_
 
 /**
  * Flips all the chunks in the specified range
- * @param bit_set The bit_set to modify
+ * @param bit_set The bitset to modify
  * @param begin Begin of the range to flip (chunk index)
  * @param end End of the range to flip (chunk index)
- * @struct BitSet
+ * @memberof BitSet
  */
 inline void bit_set_flip_chunk_in_range_begin_end(BitSet* const bit_set, const uint64_t begin, const uint64_t end)
 {
@@ -582,11 +585,11 @@ inline void bit_set_flip_chunk_in_range_begin_end(BitSet* const bit_set, const u
 
 /**
  * Flips all the chunks in the specified range
- * @param bit_set The bit_set to modify
+ * @param bit_set The bitset to modify
  * @param begin Begin of the range to flip (chunk index)
  * @param end End of the range to flip (chunk index)
  * @param step Step size between the chunks to flip (chunk step)
- * @struct BitSet
+ * @memberof BitSet
  */
 inline void bit_set_flip_chunk_in_range_begin_end_step(BitSet* const bit_set, const uint64_t begin, const uint64_t end, const uint64_t step)
 {
@@ -596,8 +599,8 @@ inline void bit_set_flip_chunk_in_range_begin_end_step(BitSet* const bit_set, co
 
 /**
  * Retrieves the chunk at the specified index
- * @struct BitSet
- * @param bit_set The bit_set to read from
+ * @memberof BitSet
+ * @param bit_set The bitset to read from
  * @param index Index of the chunk to read (chunk index)
  * @return The chunk at the specified index
  */
@@ -608,8 +611,8 @@ inline uint8_t bit_set_get_chunk(const BitSet* const bit_set, const uint64_t ind
 
 /**
  * Checks if all the bits are set
- * @struct BitSet
- * @param bit_set The bit_set to check
+ * @memberof BitSet
+ * @param bit_set The bitset to check
  * @return True if all the bits are set, false otherwise
  */
 inline bool bit_set_all(const BitSet* const bit_set)
@@ -632,8 +635,8 @@ inline bool bit_set_all(const BitSet* const bit_set)
 
 /**
  * Checks if any of the bits are set
- * @struct BitSet
- * @param bit_set The bit_set to check
+ * @memberof BitSet
+ * @param bit_set The bitset to check
  * @return True if any of the bits are set, false otherwise
  */
 inline bool bit_set_any(const BitSet* const bit_set)
@@ -656,8 +659,8 @@ inline bool bit_set_any(const BitSet* const bit_set)
 
 /**
  * Checks if none of the bits are set
- * @struct BitSet
- * @param bit_set The bit_set to check
+ * @memberof BitSet
+ * @param bit_set The bitset to check
  * @return True if none of the bits are set, false otherwise
  */
 inline bool bit_set_none(const BitSet* const bit_set)
@@ -667,8 +670,8 @@ inline bool bit_set_none(const BitSet* const bit_set)
 
 /**
  * Checks if all the bits are clear
- * @struct BitSet
- * @param bit_set The bit_set to check
+ * @memberof BitSet
+ * @param bit_set The bitset to check
  * @return True if all the bits are clear, false otherwise
  */
 inline bool bit_set_all_cleared(const BitSet* const bit_set)
@@ -690,8 +693,8 @@ inline bool bit_set_all_cleared(const BitSet* const bit_set)
 }
 
 /**
- * @struct BitSet
- * @return the number of bits set in the bit_set
+ * @memberof BitSet
+ * @return the number of bits set in the bitset
  */
 inline uint64_t bit_set_count(const BitSet* const bit_set)
 {
@@ -710,9 +713,9 @@ inline uint64_t bit_set_count(const BitSet* const bit_set)
 
 /**
  * Check if bit_set is empty
- * @param bit_set The bit_set to check
- * @return True if the bit_set is empty, false otherwise
- * @struct BitSet
+ * @param bit_set The bitset to check
+ * @return True if the bitset is empty, false otherwise
+ * @memberof BitSet
 */
 inline bool bit_set_empty(const BitSet* const bit_set)
 {
@@ -720,10 +723,10 @@ inline bool bit_set_empty(const BitSet* const bit_set)
 }
 
 /**
- * Pushes back a bit to the bit_set
- * @param bit_set The bit_set to modify
+ * Pushes back a bit to the bitset
+ * @param bit_set The bitset to modify
  * @param value Value of the bit to append (bit value)
- * @struct BitSet
+ * @memberof BitSet
  */
 void bit_set_push_back(BitSet* const bit_set, const bool value)
 {
@@ -749,9 +752,9 @@ void bit_set_push_back(BitSet* const bit_set, const bool value)
 }
 
 /**
- * Removes the last bit from the bit_set
- * @param bit_set The bit_set to modify
- * @struct BitSet
+ * Removes the last bit from the bitset
+ * @param bit_set The bitset to modify
+ * @memberof BitSet
  */
 void bit_set_pop_back(BitSet* const bit_set)
 {
@@ -770,10 +773,10 @@ void bit_set_pop_back(BitSet* const bit_set)
 }
 
 /**
- * Pushes back a chunk to the bit_set, adjusting the size to the nearest multiple of sizeof(T) upwards. [e.g. 65 bits -> (+8 {chunk} +7 {expanded area} = +15) -> 80 bits]
+ * Pushes back a chunk to the bitset, adjusting the size to the nearest multiple of sizeof(T) upwards. [e.g. 65 bits -> (+8 {chunk} +7 {expanded area} = +15) -> 80 bits]
  * The bits in the expanded area may be initialized by previous calls, but their values are not explicitly defined by this function.
- * @struct BitSet
- * @param bit_set The bit_set to modify
+ * @memberof BitSet
+ * @param bit_set The bitset to modify
  * @param chunk The chunk to push back (chunk value)
  */
 void bit_set_push_back_chunk(BitSet* const bit_set, const uint8_t chunk)
@@ -790,9 +793,9 @@ void bit_set_push_back_chunk(BitSet* const bit_set, const uint8_t chunk)
 }
 
 /**
- * Removes the last chunk from the bit_set, adjusting the size to the nearest lower multiple of sizeof(T). [e.g. 65 bits -> 64 bits -> 56 bits]
- * @struct BitSet
- * @param bit_set The bit_set to modify
+ * Removes the last chunk from the bitset, adjusting the size to the nearest lower multiple of sizeof(T). [e.g. 65 bits -> 64 bits -> 56 bits]
+ * @memberof BitSet
+ * @param bit_set The bitset to modify
  */
 void bit_set_pop_back_chunk(BitSet* const bit_set)
 {
@@ -811,10 +814,10 @@ void bit_set_pop_back_chunk(BitSet* const bit_set)
 }
 
 /**
- * Resizes the bit_set to the specified size
- * @struct BitSet
- * @param bit_set The bit_set to resize
- * @param new_size The new size of the bit_set (bit size)
+ * Resizes the bitset to the specified size
+ * @memberof BitSet
+ * @param bit_set The bitset to resize
+ * @param new_size The new size of the bitset (bit size)
  */
 void bit_set_resize(BitSet* const bit_set, const uint64_t new_size)
 {
@@ -834,10 +837,10 @@ void bit_set_resize(BitSet* const bit_set, const uint64_t new_size)
 }
 
 /**
- * Calculates the number of bytes required to store the bit_set
- * @struct BitSet
- * @param size The size of the bit_set
- * @return The number of bytes required to store the bit_set
+ * Calculates the number of bytes required to store the bitset
+ * @memberof BitSet
+ * @param size The size of the bitset
+ * @return The number of bytes required to store the bitset
  */
 inline const uint64_t bit_set_calculate_storage_size(const uint64_t size)
 {

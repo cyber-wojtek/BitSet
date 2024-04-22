@@ -23,8 +23,8 @@ public:
 
     /**
      * Size and initializer list constructor
-     * @param size Size of the CBitSet to be created (in bits)
-     * @param list Initializer list to fill the CBitSet with, must contain *chunks* not bits
+     * @param size Size of the Bitset to be created (in bits)
+     * @param list Initializer list to fill the Bitset with, must contain *chunks* not bits
 	 */
     CDynamicBitSet(const uint64_t& size, const std::initializer_list<T> list) : data(new T[calculate_storage_size(size)]), size(size), storage_size(calculate_storage_size(size))
     {
@@ -33,7 +33,7 @@ public:
 
     /**
      * Initializer list constructor
-     * @param list Initializer list to fill the CBitSet with, must contain *chunks* not bits
+     * @param list Initializer list to fill the Bitset with, must contain *chunks* not bits
      */
     CDynamicBitSet(const std::initializer_list<T> list) : data(new T[list.size() / chunk_size + (list.size() % chunk_size ? 1 : 0)]), size(list.size()), storage_size(list.size() / chunk_size + (list.size() % chunk_size ? 1 : 0))
     {
@@ -42,7 +42,7 @@ public:
 
     /**
      * Size constructor
-     * @param size Size of the CBitSet to be created (bit count)
+     * @param size Size of the Bitset to be created (bit count)
      */
     CDynamicBitSet(const uint64_t& size) : data(new T[size / chunk_size + (size % chunk_size ? 1 : 0)]), size(size), storage_size(size / chunk_size + (size % chunk_size ? 1 : 0))
     {
@@ -51,8 +51,8 @@ public:
 
     /**
      * Size and value constructor
-     * @param size Size of the CBitSet to be created (bit count)
-     * @param value Value to fill the CBitSet with (bit value)
+     * @param size Size of the Bitset to be created (bit count)
+     * @param value Value to fill the Bitset with (bit value)
      */
     CDynamicBitSet(const uint64_t& size, const bool& value) : data(new T[size / chunk_size + (size % chunk_size ? 1 : 0)]), size(size), storage_size(size / chunk_size + (size % chunk_size ? 1 : 0))
     {
@@ -538,7 +538,7 @@ public:
 	 * !!! W.I.P. - May not choose the best option, not even talking about the fact that set_in_range_optimized function doesn't even work correctly !!!\n
 	 * Fill the bits in the specified range with the specified value.\n
      * Chooses the fastest implementation based on the step.\n
-     * This function becomes more accurate in choosing the fastest implementation as the size of the CBitSet increases.\n
+     * This function becomes more accurate in choosing the fastest implementation as the size of the Bitset increases.\n
      * @param value Value to fill the bits with
      * @param begin Begin of the range to fill (bit index)
      * @param end End of the range to fill (bit index)
@@ -695,7 +695,9 @@ public:
 	    *(data + index) = ~*(data + index);
     }
 
-    // Flips all the chunks (same as flip_all, just an alias)
+    /**
+     * Flips all the chunks (same as flip_all, just an alias)
+     */
     void flip_chunk_all()
     {
         flip_all();
@@ -852,8 +854,8 @@ public:
     }
 
     /**
-     * Checks if the CBitSet is empty
-     * @return true if the CBitSet is empty, false otherwise
+     * Checks if the Bitset is empty
+     * @return true if the Bitset is empty, false otherwise
      */
     [[nodiscard]] bool empty() const
 	{
@@ -861,7 +863,7 @@ public:
 	}
 
     /**
-     * Pushes back a bit to the CBitSet
+     * Pushes back a bit to the Bitset
      * @param value Value of the bit to append (bit value)
      */
     void push_back(const bool& value)
@@ -888,7 +890,7 @@ public:
 	}
 
     /**
-     * Removes the last bit from the CBitSet
+     * Removes the last bit from the Bitset
      */
     void pop_back()
     {
@@ -907,7 +909,7 @@ public:
     }
 
     /**
-     * Pushes back a chunk to the CBitSet, adjusting the size to the nearest multiple of sizeof(T) upwards. [e.g. 65 bits -> (+8 {chunk} +7 {expanded area} = +15) -> 80 bits]
+     * Pushes back a chunk to the Bitset, adjusting the size to the nearest multiple of sizeof(T) upwards. [e.g. 65 bits -> (+8 {chunk} +7 {expanded area} = +15) -> 80 bits]
      * The bits in the expanded area may be initialized by previous calls, but their values are not explicitly defined by this function.
      * @param chunk The chunk to push back (chunk value)
      */
@@ -925,7 +927,7 @@ public:
     }
 
     /**
-     * Removes the last chunk from the CBitSet, adjusting the size to the nearest lower multiple of sizeof(T). [e.g. 65 bits -> 64 bits -> 56 bits]
+     * Removes the last chunk from the bitset, adjusting the size to the nearest lower multiple of sizeof(T). [e.g. 65 bits -> 64 bits -> 56 bits]
      */
     void pop_back_chunk()
     {
@@ -945,8 +947,8 @@ public:
     }
 
 	/**
-	 * Resizes the CBitSet to the specified size
-	 * @param new_size The new size of the CBitSet (bit size)
+	 * Resizes the Bitset to the specified size
+	 * @param new_size The new size of the bitset (bit size)
 	 */
 	void resize(const uint64_t& new_size)
 	{
@@ -971,9 +973,9 @@ public:
 	}
 
     /**
-     * Returns the number of chunks the CBitSet would utilize for given size
-     * @param size Size of the target CBitSet in bits
-     * @return The number of chunks the CBitSet would utilize for the given size
+     * Returns the number of chunks the bitset would utilize for given size
+     * @param size Size of the target bitset in bits
+     * @return The number of chunks the bitset would utilize for the given size
      */
     [[nodiscard]] inline static constexpr uint64_t calculate_storage_size(const uint64_t& size)
     {
@@ -986,12 +988,12 @@ public:
 	alignas(std::hardware_destructive_interference_size) T* data;
 
 	/**
-	 * Size of the CBitSet in bits
+	 * Size of the bitset in bits
 	 */
 	uint64_t size;
 
 	/**
-	 * Amount of chunks the CBitSet is utilizing
+	 * Size of the bitset in chunks
 	 */
 	uint64_t storage_size;
 
@@ -1468,7 +1470,7 @@ public:
      * !!! W.I.P. - May not choose the best option, not even talking about the fact that set_in_range_optimized function doesn't even work correctly !!!\n
      * Fill the bits in the specified range with the specified value.\n
      * Chooses the fastest implementation based on the step.\n
-     * This function becomes more accurate in choosing the fastest implementation as the size of the CBitSet increases.\n
+     * This function becomes more accurate in choosing the fastest implementation as the size of the Bitset increases.\n
      * @param value Value to fill the bits with
      * @param begin Begin of the range to fill (bit index)
      * @param end End of the range to fill (bit index)
@@ -1780,8 +1782,8 @@ public:
     }
 
     /**
-     * Checks if the CBitSet is empty
-     * @return true if the CBitSet is empty, false otherwise
+     * Checks if the Bitset is empty
+     * @return true if the Bitset is empty, false otherwise
      */
     [[nodiscard]] static bool empty()
     {
@@ -1789,9 +1791,9 @@ public:
     }
 
     /**
-     * Returns the number of chunks the CBitSet would utilize for given size
-     * @param size Size of the target CBitSet in bits
-     * @return The number of chunks the CBitSet would utilize for the given size
+     * Returns the number of chunks the Bitset would utilize for given size
+     * @param size Size of the target Bitset in bits
+     * @return The number of chunks the Bitset would utilize for the given size
      */
     [[nodiscard]] inline static constexpr uint64_t calculate_storage_size(const uint64_t& size)
     {
@@ -1799,12 +1801,12 @@ public:
     }
 
     /**
-     * Size of the CBitSet in bits
+     * Size of the Bitset in bits
      */
     static constexpr uint64_t size = Size;
 
     /**
-     * Amount of chunks the CBitSet is utilizing
+     * Size of the Bitset in chunks
      */
     static constexpr uint64_t storage_size = calculate_storage_size(size);
 
