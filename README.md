@@ -1,6 +1,6 @@
 # BitSet Classes for C, C++ and Python
 
-This project offers BitSet Classes implemented in C, C++, and Python with a focus on efficiency.
+This project offers both dynamic and fixed bitset classes implemented in C, C++, and Python with a focus on efficiency.
 
 **Note:** The primary goal of this project is to maximize performance, prioritizing efficiency over user-friendliness. Data members are intentionally not set as private/protected to maintain efficiency, and this approach will remain consistent throughout the project.
 
