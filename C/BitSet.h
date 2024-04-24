@@ -5,7 +5,9 @@
 #include <stdbool.h>
 #include <string.h>
 
-// Define the structure for a bit_set
+/**
+ * A bitset structure (for C API bitset)
+ */
 typedef struct 
 {
 	/**
@@ -23,7 +25,7 @@ typedef struct
 } BitSet;
 
 inline void bit_set_init(BitSet* const bit_set, const uint64_t size);
-inline void bit_set_init_with_value(BitSet* const bit_set, const uint64_t size, const uint64_t value);
+inline void bit_set_init_chunk(BitSet* const bit_set, const uint64_t size, const uint64_t value);
 inline void bit_set_destroy(const BitSet* const bit_set);
 inline void bit_set_copy_from(BitSet* const destination, const BitSet* const source);
 inline void bit_set_move_from(BitSet* const destination, BitSet* const source);
@@ -71,6 +73,7 @@ inline void bit_set_push_back_chunk(BitSet* const bit_set, const uint8_t chunk);
 inline void bit_set_pop_back_chunk(BitSet* const bit_set);
 inline void bit_set_resize(BitSet* const bit_set, const uint64_t new_size);
 inline const uint64_t bit_set_calculate_storage_size(const uint64_t size);
+inline const uint8_t bit_set_create_filled_chunk(const bool value);
 
 /**
  * Size initialization
@@ -83,22 +86,22 @@ inline void bit_set_init(BitSet* const bit_set, const uint64_t size)
     bit_set->size = size;
     bit_set->storage_size = size / 8u + (size % 8u ? 1 : 0);
     bit_set->data = (uint8_t*)malloc(bit_set->storage_size * sizeof(uint8_t));
-    bit_set_fill_all(bit_set, 0);
+    memset(bit_set->data, 0, size * sizeof(uint8_t));
 }
 
 /**
  * Size and value initialization
  * @param bit_set Pointer to bitset to initialize
  * @param size The size of the bitset to be initialized
- * @param value The value to fill the bitset with
+ * @param chunk The chunk to fill the bitset with (chunk value)
  * @memberof BitSet
  */
-inline void bit_set_init_with_value(BitSet* const bit_set, const uint64_t size, const uint64_t value) 
+inline void bit_set_init_chunk(BitSet* const bit_set, const uint64_t size, const uint8_t chunk) 
 {
     bit_set->size = size;
     bit_set->storage_size = size / 8u + (size % 8u ? 1 : 0);
     bit_set->data = (uint8_t*)malloc(bit_set->storage_size * sizeof(uint8_t));
-    bit_set_fill_all(bit_set, value);
+    memset(bit_set->data, chunk, size * sizeof(uint8_t));
 }
 
 /**
@@ -132,8 +135,8 @@ inline void bit_set_copy_from(BitSet* const destination, const BitSet* const sou
 inline void bit_set_move_from(BitSet* const destination, BitSet* source) 
 {
     destination->size = source->size;
-    source->size = 0;
     destination->data = source->data;
+    source->size = 0;
     source->data = NULL;
 }
 
@@ -160,7 +163,7 @@ inline void bit_set_set_value(const BitSet* const bit_set, const uint64_t value,
  * @memberof BitSet
  */
 inline bool bit_set_get(const BitSet* const bit_set, const uint64_t index) {
-    return (*(bit_set->data + index / 8u) & (uint8_t)1u << index % 8u) >> index % 8u;
+    return (*(bit_set->data + index / 8u) & (uint8_t)1u << index % 8u);
 }
 
 /**
@@ -231,7 +234,7 @@ inline void bit_set_fill_in_range_end(BitSet* const bit_set, const bool value, c
  * @param end End of the range to fill (bit index)
  * @memberof BitSet
  */
-inline void bit_set_clear_in_range(BitSet* const bit_set, const uint64_t end)
+inline void bit_set_clear_in_range_end(BitSet* const bit_set, const uint64_t end)
 {
     memset(bit_set->data, 0, end / 8u);
     if (end % 8u)
@@ -247,7 +250,7 @@ inline void bit_set_clear_in_range(BitSet* const bit_set, const uint64_t end)
  * @param end End of the range to fill (bit index)
  * @memberof BitSet
  */
-inline void bit_set_set_in_range(BitSet* const bit_set, const uint64_t end)
+inline void bit_set_set_in_range_end(BitSet* const bit_set, const uint64_t end)
 {
     memset(bit_set->data, 255u, end / 8u);
     if (end % 8u)
@@ -753,7 +756,7 @@ void bit_set_push_back(BitSet* const bit_set, const bool value)
 			free(bit_set->data);
 		}
 		bit_set->data = new_data;
-		*(bit_set->data + bit_set->storage_size++) = value ? (uint8_t)1u : 0u;
+		*(bit_set->data + bit_set->storage_size++) = value ? 1u : 0u;
 	}
 	++bit_set->size;
 }
@@ -852,4 +855,16 @@ void bit_set_resize(BitSet* const bit_set, const uint64_t new_size)
 inline const uint64_t bit_set_calculate_storage_size(const uint64_t size)
 {
     return size / 8u + (size % 8u ? 1 : 0);
+}
+
+/**
+ * Creates a chunk of type uint8_t based on the given boolean value.
+ *
+ * @param value A boolean value indicating whether to create the chunk with the maximum value or zero.
+ * @return The created chunk of type uint8_t. If value is true, returns the maximum value representable by type uint8_t, which is 255,
+ *         otherwise returns zero.
+ */
+inline const uint8_t bit_set_create_filled_chunk(const bool value)
+{
+    return value ? 255u : 0u;
 }
