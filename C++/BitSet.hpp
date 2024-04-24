@@ -9,9 +9,6 @@
 
 // Note: (std::numeric_limits<T>::max)() is used instead of std::numeric_limits<T>::max() because Windows.h defines a macro max which conflicts with std::numeric_limits<T>::max()
 
-namespace bit_set
-{}
-
 template <typename T>
 concept UnsignedInteger = std::is_unsigned_v<T> && std::is_integral_v<T>;
 
