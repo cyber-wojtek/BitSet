@@ -7,12 +7,12 @@
 #include <new>
 #include <cstring>
 
-// Note: (std::numeric_limits<T>::max)() is used instead of std::numeric_limits<T>::max() because Windows.h defines a macro max which conflicts with std::numeric_limits<T>::max()
+// Note: (std::numeric_limits<BlockType>::max)() is used instead of std::numeric_limits<BlockType>::max() because Windows.h defines a macro max which conflicts with std::numeric_limits<BlockType>::max()
 
 template <typename T>
 concept UnsignedInteger = std::is_unsigned_v<T> && std::is_integral_v<T>;
 
-template <UnsignedInteger T>
+template <UnsignedInteger BlockType>
 class CDynamicBitSet
 {
 public:
@@ -24,18 +24,18 @@ public:
     /**
      * Size and initializer list constructor
      * @param size Size of the Bitset to be created (in bits)
-     * @param list Initializer list to fill the Bitset with, containing chunk values
+     * @param list Initializer list to fill the Bitset with, containing block values
 	 */
-    CDynamicBitSet(const uint64_t& size, const std::initializer_list<T> list) noexcept : m_data(new T[calculate_storage_size(size)]), m_size(size), m_storage_size(calculate_storage_size(size))
+    CDynamicBitSet(const uint64_t& size, const std::initializer_list<BlockType> list) noexcept : m_data(new BlockType[calculate_storage_size(size)]), m_size(size), m_storage_size(calculate_storage_size(size))
     {
         std::copy(list.begin(), list.end(), m_data);
     }
 
     /**
      * Initializer list constructor
-     * @param list Initializer list to fill the Bitset with, containing chunk values
+     * @param list Initializer list to fill the Bitset with, containing block values
      */
-    CDynamicBitSet(const std::initializer_list<T> list) noexcept : m_data(new T[list.m_size() / m_chunk_size + (list.m_size() % m_chunk_size ? 1 : 0)]), m_size(list.m_size()), m_storage_size(list.m_size() / m_chunk_size + (list.m_size() % m_chunk_size ? 1 : 0))
+    CDynamicBitSet(const std::initializer_list<BlockType> list) noexcept : m_data(new BlockType[calculate_storage_size(list.size())]), m_size(list.m_size()), m_storage_size(calculate_storage_size(list.size()))
     {
         std::copy(list.begin(), list.end(), m_data);
     }
@@ -44,25 +44,28 @@ public:
      * Size constructor
      * @param size Size of the Bitset to be created (bit count)
      */
-    CDynamicBitSet(const uint64_t& size) noexcept : m_data(new T[size / m_chunk_size + (size % m_chunk_size ? 1 : 0)]), m_size(size), m_storage_size(size / m_chunk_size + (size % m_chunk_size ? 1 : 0))
+    CDynamicBitSet(const uint64_t& size) noexcept : m_data(new BlockType[calculate_storage_size(size)]), m_size(size), m_storage_size(calculate_storage_size(size))
     {
-        clear();
+        reset();
     }
 
     /**
-     * Size and chunk value constructor
+     * Size and block value constructor
      * @param size Size of the bitset to be created (bit size)
-     * @param chunk Chunk to fill the bitset with (chunk value)
+     * @param block Chunk to fill the bitset with (block value)
      */
-    CDynamicBitSet(const uint64_t& size, const T& chunk) noexcept : m_data(new T[size / m_chunk_size + (size % m_chunk_size ? 1 : 0)]{ chunk }), m_size(size), m_storage_size(size / m_chunk_size + (size % m_chunk_size ? 1 : 0)) {}
+    CDynamicBitSet(const uint64_t& size, const BlockType& block) noexcept : m_data(new BlockType[calculate_storage_size(size)]), m_size(size), m_storage_size(calculate_storage_size(size))
+	{
+        fill_block(block);
+	}
 
     /**
      * Copy constructor
      * @param other Other CDynamicBitSet instance to copy from
      */
-    CDynamicBitSet(const CDynamicBitSet& other) noexcept : m_data(new T[other.m_size / m_chunk_size + (other.m_size % m_chunk_size ? 1 : 0)]), m_size(other.m_size), m_storage_size(other.m_size / m_chunk_size + (other.m_size % m_chunk_size ? 1 : 0))
+    CDynamicBitSet(const CDynamicBitSet& other) noexcept : m_data(new BlockType[other.m_storage_size]), m_size(other.m_size), m_storage_size(other.m_storage_size)
     {
-        std::copy(other.m_data, other.m_data + other.m_size / m_chunk_size + (other.m_size % m_chunk_size ? 1 : 0), m_data);
+        std::copy(other.m_data, other.m_data + other.m_storage_size, m_data);
     }
 
     /**
@@ -88,7 +91,7 @@ public:
      */
     [[nodiscard]] bool operator[](const uint64_t& index) const noexcept
     {
-        return get(index);
+        return *(m_data + index / m_block_size) & BlockType{ 1 } << (m_block_size - index % m_block_size);
     }
 
     /**
@@ -103,11 +106,11 @@ public:
             if (m_size != other.m_size)
             {
 	            delete[] m_data;
-                m_data = new T[other.m_size / m_chunk_size + (other.m_size % m_chunk_size ? 1 : 0)];
+                m_storage_size = other.m_storage_size;
                 m_size = other.m_size;
-                m_storage_size = other.m_size / m_chunk_size + (other.m_size % m_chunk_size ? 1 : 0);
+                m_data = new BlockType[other.m_storage_size];
 			}
-			std::copy(other.m_data, other.m_data + other.m_size / m_chunk_size + (other.m_size % m_chunk_size ? 1 : 0), m_data);
+			std::copy(other.m_data, other.m_data + other.m_storage_size, m_data);
 		}
 		return *this;
 	}
@@ -131,35 +134,303 @@ public:
         return *this;
 	}
 
+    // comparison operators
+
+    /**
+     * Equality operator
+     * @param other Other CDynamicBitSet instance to compare with
+     * @return True if the two instances are equal, false otherwise
+     */
+	[[nodiscard]] bool operator==(const CDynamicBitSet& other) const noexcept
+	{
+		if (m_size != other.m_size)
+			return false;
+		for (uint64_t i = 0; i < m_storage_size; ++i)
+		{
+			if (*(m_data + i) != *(other.m_data + i))
+				return false;
+		}
+		return true;
+	}
+
+    /**
+     * Inequality operator
+     * @param other Other CDynamicBitSet instance to compare with
+     * @return True if the two instances are not equal, false otherwise
+     */
+    [[nodiscard]] bool operator!=(const CDynamicBitSet& other) const noexcept
+	{
+		if (m_size != other.m_size)
+			return true;
+        for (uint64_t i = 0; i < m_storage_size; ++i)
+        {
+	        if (*(m_data + i) != *(other.m_data + i))
+				return true;
+		}
+        return false;
+	}
+
+    // Bitwise operators
+
+    /**
+     * Bitwise AND operator
+     * @param other Other CDynamicBitSet instance to perform the operation with
+     * @return New CDynamicBitSet instance containing the result of the operation
+     */
+	[[nodiscard]] CDynamicBitSet&& operator&(const CDynamicBitSet& other) const noexcept
+	{
+		CDynamicBitSet result(m_size < other.m_size ? m_size : other.m_size);
+		for (uint64_t i = 0; i < result.m_storage_size; ++i)
+			*(result.m_data + i) = *(m_data + i) & *(other.m_data + i);
+		return result;
+	}
+
+    /**
+     * Apply bitwise AND operation with another CDynamicBitSet instance
+     * @param other Other CDynamicBitSet instance to perform the operation with
+     */
+    CDynamicBitSet& operator&=(const CDynamicBitSet& other) noexcept
+	{
+		for (uint64_t i = 0; i < m_storage_size; ++i)
+			*(m_data + i) &= *(other.m_data + i);
+		return *this;
+	}
+
+    /**
+     * Bitwise OR operator
+     * @param other Other CDynamicBitSet instance to perform the operation with
+     * @return New CDynamicBitSet instance containing the result of the operation
+     */
+	[[nodiscard]] CDynamicBitSet&& operator|(const CDynamicBitSet& other) const noexcept
+	{
+		CDynamicBitSet result(m_size > other.m_size ? m_size : other.m_size);
+		for (uint64_t i = 0; i < result.m_storage_size; ++i)
+			*(result.m_data + i) = *(m_data + i) | *(other.m_data + i);
+		return result;
+	}
+
+    /**
+     * Apply bitwise OR operation with another CDynamicBitSet instance
+     * @param other Other CDynamicBitSet instance to perform the operation with
+     */
+    CDynamicBitSet& operator|=(const CDynamicBitSet& other) noexcept
+	{
+        for (uint64_t i = 0; i < m_storage_size; ++i)
+            *(m_data + i) |= *(other.m_data + i);
+        return *this;
+	}
+
+    /**
+	 * Bitwise XOR operator
+	 * @param other Other CDynamicBitSet instance to perform the operation with
+	 * @return New CDynamicBitSet instance containing the result of the operation
+	 */
+    [[nodiscard]] CDynamicBitSet&& operator^(const CDynamicBitSet& other) const noexcept
+    {
+        CDynamicBitSet result(m_size > other.m_size ? m_size : other.m_size);
+        for (uint64_t i = 0; i < result.m_storage_size; ++i)
+            *(result.m_data + i) = *(m_data + i) ^ *(other.m_data + i);
+        return result;
+    }
+
+    /**
+	 * Apply bitwise XOR operation with another CDynamicBitSet instance
+	 * @param other Other CDynamicBitSet instance to perform the operation with
+	 */
+    CDynamicBitSet& operator^=(const CDynamicBitSet& other) noexcept
+    {
+        for (uint64_t i = 0; i < m_storage_size; ++i)
+            *(m_data + i) ^= *(other.m_data + i);
+        return *this;
+    }
+
+    /**
+	 * Bitwise NOT operator
+	 * @return New CDynamicBitSet instance containing the result of the operation
+	 */
+    [[nodiscard]] CDynamicBitSet&& operator~() const noexcept
+    {
+        CDynamicBitSet result(m_size);
+        for (uint64_t i = 0; i < m_storage_size; ++i)
+            *(result.m_data + i) = ~*(m_data + i);
+        return result;
+    }
+
+    /**
+     * Bitwise right shift operator
+     * @param shift Amount of bits to shift to the right
+     * @return New CDynamicBitSet instance containing the result of the operation
+     */
+    [[nodiscard]] CDynamicBitSet&& operator>>(const uint64_t& shift) const noexcept
+	{
+        CDynamicBitSet result(m_size);
+        if (shift <= m_block_size)
+        {
+            for (uint64_t i = 0; i < m_storage_size; ++i)
+                *(result.m_data + i) = *(m_data + i) >> shift;
+        }
+        return result;
+	}
+
+    /**
+	 * Apply bitwise right shift operation
+	 * @param shift Amount of bits to shift to the right
+	 */
+    [[nodiscard]] CDynamicBitSet& operator>>=(const uint64_t& shift) noexcept
+    {
+        if (shift > m_block_size)
+            reset();
+        else
+        {
+            for (uint64_t i = 0; i < m_storage_size; ++i)
+                *(m_data + i) >>= shift;
+        }
+        return *this;
+    }
+
+
+    /**
+     * Bitwise right shift operator
+     * @param shift Amount of bits to shift to the right
+     * @return New CDynamicBitSet instance containing the result of the operation
+     */
+    [[nodiscard]] CDynamicBitSet&& operator<<(const uint64_t& shift) const noexcept
+    {
+        CDynamicBitSet result(m_size);
+        if (shift <= m_block_size)
+        {
+            for (uint64_t i = 0; i < m_storage_size; ++i)
+                *(result.m_data + i) = *(m_data + i) << shift;
+        }
+        return result;
+    }
+
+    /**
+     * Apply bitwise right shift operation
+     * @param shift Amount of bits to shift to the right
+     */
+    [[nodiscard]] CDynamicBitSet& operator<<=(const uint64_t& shift) noexcept
+    {
+        if (shift > m_block_size)
+            reset();
+        else
+        {
+            for (uint64_t i = 0; i < m_storage_size; ++i)
+                *(m_data + i) <<= shift;
+        }
+        return *this;
+    }
+
+    /**
+     * Difference operator
+     * @param other Other CDynamicBitSet instance to compare with
+     * @return New CDynamicBitSet instance containing the result of the operation
+     */
+	[[nodiscard]] CDynamicBitSet&& operator-(const CDynamicBitSet& other) const noexcept
+	{
+		CDynamicBitSet result(m_size < other.m_size ? m_size : other.m_size);
+        for (uint64_t i = 0; i < result.m_storage_size; ++i)
+			*(result.m_data + i) = *(m_data + i) & ~*(other.m_data + i);
+	}
+
+    /**
+     *  Apply difference operation
+     * @param other Other CDynamicBitSet instance to compare with
+     */
+    CDynamicBitSet& operator-=(const CDynamicBitSet& other) noexcept
+	{
+        for (uint64_t i = 0; i < m_storage_size; ++i)
+            *(m_data + i) &= ~*(other.m_data + i);
+	}
+
+    // Utility functions
+
+    /**
+     * Converts the Bitset to a string
+     * @param set_chr Character to represent set bits
+     * @param clr_chr Character to represent clear bits
+     * @param separator Character to separate the bit blocks
+     * @return String representation of the Bitset
+     */
+    [[nodiscard]] std::string&& to_string(const char& set_chr = '1', const char& clr_chr = '0', const char& separator = 0) const noexcept
+	{
+        std::string result("", m_size + (separator ? m_storage_size : 0));
+		std::string::iterator it = result.begin();
+        if (!separator)
+        {
+            for (uint64_t i = 0; i < m_storage_size; ++i)
+            {
+                for (uint16_t j = 0; j < m_block_size; ++j)
+                    *it++ = *(m_data + i) & BlockType { 1 } << j ? set_chr : clr_chr;
+            }
+        }
+        else
+        {
+	        for (uint64_t i = 0; i < m_storage_size; ++i)
+	        {
+	        	for (uint16_t j = 0; j < m_block_size; ++j)
+					*it++ = *(m_data + i) & BlockType { 1 } << j ? set_chr : clr_chr;
+				*it++ = separator;
+			}
+        }
+		return std::move(result);
+	}
+
+	/**
+	 * Converts the Bitset to an integer value
+	 * @tparam T Type of the integral value to convert to
+	 * @return Converted integer value
+	 */
+	template <UnsignedInteger T>
+	[[nodiscard]] T to_integer() const noexcept
+	{
+		T result = 0;
+		for (uint64_t i = 0; i < m_storage_size; ++i)
+			result |= *(m_data + i);
+		return result;
+	}
+    /**
+     * @return Size of the Bitset (bit count)
+     */
+    [[nodiscard]] uint64_t size() const noexcept { return m_size; }
+
+	/**
+	 * @return Number of blocks in the Bitset
+	 */
+	[[nodiscard]] uint64_t storage_size() const noexcept { return m_storage_size; }
+
+	/**
+	 * @return Pointer to the underlying array 
+	 */
+	[[nodiscard]] BlockType* data() noexcept { return m_data; }
+
+    /**
+	 * @return Const pointer to the underlying array
+	 */
+    [[nodiscard]] const BlockType* data() const noexcept { return m_data; }
+
+    // Bitset operations
+
     /**
      * Sets the bit at the specified index to the specified value
      * @param value Value to set the bit to (bit value)
      * @param index Index of the bit to set (bit index)
      */
-    void set(const bool& value, const uint64_t& index) noexcept
+    void set(const uint64_t& index, const bool& value = true) noexcept
     {
         if (value)
-            *(m_data + index / m_chunk_size) |= T{ 1 } << index % m_chunk_size;
+            *(m_data + index / m_block_size) |= BlockType{ 1 } << (m_block_size - index % m_block_size);
         else
-            *(m_data + index / m_chunk_size) &= ~(T{ 1 } << index % m_chunk_size);
-    }
-
-    /**
-	 * Sets the bit at the specified index to 1 (true)
-	 * @param index Index of the bit to set (bit index)
-	 */
-    void set(const uint64_t& index) noexcept
-    {
-        *(m_data + index / m_chunk_size) |= T{ 1 } << index % m_chunk_size;
+            *(m_data + index / m_block_size) &= ~(BlockType{ 1 } << (m_block_size - index % m_block_size));
     }
 
     /**
      * Sets the bit at the specified index to 0 (false)
-     * @param index Index of the bit to clear (bit index)
+     * @param index Index of the bit to reset (bit index)
      */
-    void clear(const uint64_t& index) noexcept
+    void reset(const uint64_t& index) noexcept
     {
-        *(m_data + index / m_chunk_size) &= ~(T{ 1 } << index % m_chunk_size);
+        *(m_data + index / m_block_size) &= ~(BlockType{ 1 } << (m_block_size - index % m_block_size));
     }
 
     /**
@@ -168,15 +439,15 @@ public:
      */
     void fill(const bool& value) noexcept
     {
-        ::memset(m_data, value ? (std::numeric_limits<T>::max)() : 0, m_storage_size * sizeof(T));
+        ::memset(m_data, value ? (std::numeric_limits<BlockType>::max)() : 0, m_storage_size * sizeof(BlockType));
     }
 
     /**
      * Clears all the bits (sets all bits to 0)
      */
-    void clear() noexcept
+    void reset() noexcept
     {
-        ::memset(m_data, 0, m_storage_size * sizeof(T));
+        ::memset(m_data, 0, m_storage_size * sizeof(BlockType));
     }
 
     /**
@@ -184,7 +455,7 @@ public:
      */
     void set() noexcept
     {
-        ::memset(m_data, (std::numeric_limits<T>::max)(), m_storage_size * sizeof(T));
+        ::memset(m_data, (std::numeric_limits<BlockType>::max)(), m_storage_size * sizeof(BlockType));
     }
 
     /**
@@ -192,20 +463,20 @@ public:
      * @param value Value to fill the bits with (bit value)
      * @param end End of the range to fill (bit index)
      */
-    void fill_in_range(const bool& value, const uint64_t& end) noexcept
+    void fill_in_range(const uint64_t& end, const bool& value = true) noexcept
     {
-        ::memset(m_data, value ? (std::numeric_limits<T>::max)() : 0, end / m_chunk_size * sizeof(T));
-        if (end % m_chunk_size)
+        ::memset(m_data, value ? (std::numeric_limits<BlockType>::max)() : 0, end / m_block_size * sizeof(BlockType));
+        if (end % m_block_size)
         {
             if (value)
             {
-                for (uint16_t i = 0; i < end % m_chunk_size; ++i)
-					*(m_data + end / m_chunk_size) |= T{ 1 } << i;
+                for (uint16_t i = 0; i < end % m_block_size; ++i)
+					*(m_data + end / m_block_size) |= BlockType{ 1 } << i;
             }
             else if (!value)
             {
-                for (uint16_t i = 0; i < end % m_chunk_size; ++i)
-                    *(m_data + end / m_chunk_size) &= ~(T{ 1 } << i);
+                for (uint16_t i = 0; i < end % m_block_size; ++i)
+                    *(m_data + end / m_block_size) &= ~(BlockType{ 1 } << i);
             }
         }
     }
@@ -214,29 +485,15 @@ public:
      * Fills all the bits in the specified range with 0 (false)
      * @param end End of the range to fill (bit index)
      */
-    void clear_in_range(const uint64_t& end) noexcept
+    void reset_in_range(const uint64_t& end) noexcept
     {
-        ::memset(m_data, 0, end / m_chunk_size * sizeof(T));
-        if (end % m_chunk_size)
+        ::memset(m_data, 0, end / m_block_size * sizeof(BlockType));
+        if (end % m_block_size)
         {
-            for (uint16_t i = 0; i < end % m_chunk_size; ++i)
-                *(m_data + end / m_chunk_size) &= ~(T{ 1 } << i);
+            for (uint16_t i = 0; i < end % m_block_size; ++i)
+                *(m_data + end / m_block_size) &= ~(BlockType{ 1 } << i);
         }
     }
-
-    /**
-     * Fills all the bits in the specified range with 1 (true)
-     * @param end End of the range to fill (bit index)
-     */
-    void set_in_range(const uint64_t& end) noexcept
-	{
-		::memset(m_data, (std::numeric_limits<T>::max)(), end / m_chunk_size * sizeof(T));
-		if (end % m_chunk_size)
-		{
-			for (uint16_t i = 0; i < end % m_chunk_size; ++i)
-				*(m_data + end / m_chunk_size) |= T{ 1 } << i;
-		}
-	}
 
     /**
      * Fills all the bits in the specified range with the specified value
@@ -244,46 +501,46 @@ public:
      * @param begin Begin of the range to fill (bit index)
      * @param end End of the range to fill (bit index)
      */
-    void fill_in_range(const bool& value, const uint64_t& begin, const uint64_t& end) noexcept
+    void fill_in_range(const uint64_t& begin, const uint64_t& end, const bool& value = true) noexcept
     {
-        constexpr T max_value = (std::numeric_limits<T>::max)();
+        constexpr BlockType max_value = (std::numeric_limits<BlockType>::max)();
         uint8_t to_add = 1, to_sub = 1;
-        // create begin_chunk and fill the first byte with it
-        if (begin % m_chunk_size)
+        // create begin_block and fill the first byte with it
+        if (begin % m_block_size)
         {
-            const uint16_t end_bit = (begin / m_chunk_size == end / m_chunk_size) ? end % m_chunk_size : m_chunk_size;
+            const uint16_t end_bit = (begin / m_block_size == end / m_block_size) ? end % m_block_size : m_block_size;
             if (value)
             {
-                for (uint16_t i = begin % m_chunk_size; i < end_bit; ++i)
-                    *(m_data + begin / m_chunk_size) |= T{ 1 } << i;
+                for (uint16_t i = begin % m_block_size; i < end_bit; ++i)
+                    *(m_data + begin / m_block_size) |= BlockType{ 1 } << i;
             }
             else
             {
-                for (uint16_t i = begin % m_chunk_size; i < end_bit; ++i)
-                    *(m_data + begin / m_chunk_size) &= ~(T{ 1 } << i);
+                for (uint16_t i = begin % m_block_size; i < end_bit; ++i)
+                    *(m_data + begin / m_block_size) &= ~(BlockType{ 1 } << i);
             }
         }
 		else
 			to_add = 0;
 
-        // set the end chunk if the end is not aligned with the chunk size
-        if (end % m_chunk_size && begin / m_chunk_size != end / m_chunk_size)
+        // set the end block if the end is not aligned with the block size
+        if (end % m_block_size && begin / m_block_size != end / m_block_size)
         {
 	        if (value)
 	        {
-	        	for (uint16_t i = 0; i < end % m_chunk_size; ++i)
-					*(m_data + end / m_chunk_size) |= T{ 1 } << i;
+	        	for (uint16_t i = 0; i < end % m_block_size; ++i)
+					*(m_data + end / m_block_size) |= BlockType{ 1 } << i;
 			}
 			else
 			{
-				for (uint16_t i = 0; i < end % m_chunk_size; ++i)
-					*(m_data + end / m_chunk_size) &= ~(T{ 1 } << i);
+				for (uint16_t i = 0; i < end % m_block_size; ++i)
+					*(m_data + end / m_block_size) &= ~(BlockType{ 1 } << i);
 			}
 		}
         else
             to_sub = 0;
 
-        ::memset(m_data + begin / m_chunk_size + to_add, value ? max_value : 0, (end - begin) / m_chunk_size * sizeof(T) - to_sub);
+        ::memset(m_data + begin / m_block_size + to_add, value ? max_value : 0, (end - begin) / m_block_size * sizeof(BlockType) - to_sub);
     }
 
     /**
@@ -291,60 +548,29 @@ public:
      * @param begin Begin of the range to fill (bit index)
      * @param end End of the range to fill (bit index)
      */
-    void clear_in_range(const uint64_t& begin, const uint64_t& end) noexcept
+    void reset_in_range(const uint64_t& begin, const uint64_t& end) noexcept
     {
         uint8_t to_add = 1, to_sub = 1;
-        // create begin_chunk and fill the first byte with it
-        if (begin % m_chunk_size)
+        // create begin_block and fill the first byte with it
+        if (begin % m_block_size)
         {
-            const uint16_t end_bit = begin / m_chunk_size == end / m_chunk_size ? end % m_chunk_size : m_chunk_size;
-            for (uint16_t i = begin % m_chunk_size; i < end_bit; ++i)
-                *(m_data + begin / m_chunk_size) &= ~(T{ 1 } << i);
+            const uint16_t end_bit = begin / m_block_size == end / m_block_size ? end % m_block_size : m_block_size;
+            for (uint16_t i = begin % m_block_size; i < end_bit; ++i)
+                *(m_data + begin / m_block_size) &= ~(BlockType{ 1 } << i);
         }
         else
             to_add = 0;
 
-        // set the end chunk if the end is not aligned with the chunk size
-        if (end % m_chunk_size && begin / m_chunk_size != end / m_chunk_size)
+        // set the end block if the end is not aligned with the block size
+        if (end % m_block_size && begin / m_block_size != end / m_block_size)
         {
-            for (uint16_t i = 0; i < end % m_chunk_size; ++i)
-                *(m_data + end / m_chunk_size) &= ~(T{ 1 } << i);
+            for (uint16_t i = 0; i < end % m_block_size; ++i)
+                *(m_data + end / m_block_size) &= ~(BlockType{ 1 } << i);
         }
         else
             to_sub = 0;
 
-        ::memset(m_data + begin / m_chunk_size + to_add, 0, (end - begin) / m_chunk_size * sizeof(T) - to_sub);
-    }
-
-    /**
-     * Fills all the bits in the specified range with 1 (true)
-     * @param begin Begin of the range to fill (bit index)
-     * @param end End of the range to fill (bit index)
-     */
-    void set_in_range(const uint64_t& begin, const uint64_t& end) noexcept
-    {
-        constexpr T max_value = (std::numeric_limits<T>::max)();
-        uint8_t to_add = 1, to_sub = 1;
-        // create begin_chunk and fill the first byte with it
-        if (begin % m_chunk_size)
-        {
-            const uint16_t end_bit = (begin / m_chunk_size == end / m_chunk_size) ? end % m_chunk_size : m_chunk_size;
-            for (uint16_t i = begin % m_chunk_size; i < end_bit; ++i)
-                *(m_data + begin / m_chunk_size) |= T{ 1 } << i;
-        }
-        else
-            to_add = 0;
-
-        // set the end chunk if the end is not aligned with the chunk size
-        if (end % m_chunk_size && begin / m_chunk_size != end / m_chunk_size)
-        {
-            for (uint16_t i = 0; i < end % m_chunk_size; ++i)
-                *(m_data + end / m_chunk_size) |= T{ 1 } << i;
-        }
-        else
-            to_sub = 0;
-
-        ::memset(m_data + begin / m_chunk_size + to_add, max_value, (end - begin) / m_chunk_size * sizeof(T) - to_sub);
+        ::memset(m_data + begin / m_block_size + to_add, 0, (end - begin) / m_block_size * sizeof(BlockType) - to_sub);
     }
 
     /**
@@ -354,14 +580,14 @@ public:
      * @param end End of the range to fill (bit index)
      * @param step Step size between the bits to fill (bit step)
      */
-    void fill_in_range(const bool& value, const uint64_t& begin, const uint64_t& end, const uint64_t& step) noexcept
+    void fill_in_range(const uint64_t& begin, const uint64_t& end, const uint64_t& step, const bool& value = true) noexcept
     {
         for (uint64_t i = begin; i < end; i += step)
         {
             if (value)
-                *(m_data + i / m_chunk_size) |= T{ 1 } << i % m_chunk_size;
+                *(m_data + i / m_block_size) |= BlockType{ 1 } << i % m_block_size;
             else
-                *(m_data + i / m_chunk_size) &= ~(T{ 1 } << i % m_chunk_size);
+                *(m_data + i / m_block_size) &= ~(BlockType{ 1 } << i % m_block_size);
         }
     }
 
@@ -371,22 +597,10 @@ public:
      * @param end End of the range to fill (bit index)
      * @param step Step size between the bits to fill (bit step)
      */
-    void clear_in_range(const uint64_t& begin, const uint64_t& end, const uint64_t& step) noexcept
+    void reset_in_range(const uint64_t& begin, const uint64_t& end, const uint64_t& step) noexcept
     {
         for (uint64_t i = begin; i < end; i += step)
-            *(m_data + i / m_chunk_size) &= ~(T{ 1 } << i % m_chunk_size);
-    }
-
-    /**
-     * Fills all the bits in the specified range with 1 (true)
-     * @param begin Begin of the range to fill (bit index)
-     * @param end End of the range to fill (bit index)
-     * @param step Step size between the bits to fill (bit step)
-     */
-    void set_in_range(const uint64_t& begin, const uint64_t& end, const uint64_t& step) noexcept
-    {
-        for (uint64_t i = begin; i < end; i += step)
-            *(m_data + i / m_chunk_size) |= T{ 1 } << i % m_chunk_size;
+            *(m_data + i / m_block_size) &= ~(BlockType{ 1 } << i % m_block_size);
     }
 
     /**
@@ -394,139 +608,139 @@ public:
      * Fill the bits in the specified range with the specified value using an optimized algorithm.\n
      * This algorithm is particularly efficient when the step size is relatively low.\n
      * Note: This function has a rather complex implementation. It is not recommended to use it when simple filling without a step is possible.\n
-     * Performance of this function varies significantly depending on the step. It performs best when step is a multiple of m_chunk_size, and is within reasonable range from it.\n
-     * However, worst when step is not aligned with m_chunk_size and end is not aligned with m_chunk_size. In such cases, extra processing is required to handle the boundary chunks.\n
+     * Performance of this function varies significantly depending on the step. It performs best when step is a multiple of m_block_size, and is within reasonable range from it.\n
+     * However, worst when step is not aligned with m_block_size and end is not aligned with m_block_size. In such cases, extra processing is required to handle the boundary blocks.\n
      * @param value Value to fill the bits with (bit value)
      * @param begin Begin of the range to fill (bit index)
      * @param end End of the range to fill (bit index)
      * @param step Step size between the bits to fill (bit step)
      */
-    void fill_in_range_optimized(const bool& value, const uint64_t& begin, const uint64_t& end, const uint64_t& step) noexcept
+    void fill_in_range_optimized(const uint64_t& begin, const uint64_t& end, const uint64_t& step, const bool& value = true) noexcept
     {
         // Initialize variables
-        uint64_t chunks_size, current_chunk = begin / m_chunk_size + 1 + step / m_chunk_size, current_offset = 0;
+        uint64_t blocks_size, current_block = begin / m_block_size + 1 + step / m_block_size, current_offset = 0;
         uint16_t offset;
-        const uint64_t end_chunk = end / m_chunk_size + (end % m_chunk_size ? 1 : 0);
+        const uint64_t end_block = end / m_block_size + (end % m_block_size ? 1 : 0);
 
-        // Determine the size of chunks based on step and chunk size
-        if ((step % 2 || step <= m_chunk_size) && m_chunk_size % step) {
-            chunks_size = (std::min)(m_storage_size, step);
+        // Determine the size of blocks based on step and block size
+        if ((step % 2 || step <= m_block_size) && m_block_size % step) {
+            blocks_size = (std::min)(m_storage_size, step);
         }
-        else if (!(m_chunk_size % step))
-            chunks_size = 1;
-        else if (!(step % m_chunk_size))
-            chunks_size = step / m_chunk_size;
+        else if (!(m_block_size % step))
+            blocks_size = 1;
+        else if (!(step % m_block_size))
+            blocks_size = step / m_block_size;
         else
         {
-            // GCD of step and m_chunk_size
-            if (step % m_chunk_size)
+            // GCD of step and m_block_size
+            if (step % m_block_size)
             {
-                uint64_t a = step, b = m_chunk_size, t = m_chunk_size;
+                uint64_t a = step, b = m_block_size, t = m_block_size;
                 while (b) {
                     t = b;
                     b = a % b;
                     a = t;
                 }
-                chunks_size = a;
+                blocks_size = a;
             }
             else
-                chunks_size = 1;
+                blocks_size = 1;
         }
 
         // Calculate the offset
-        if (begin < m_chunk_size)
+        if (begin < m_block_size)
         {
-            offset = (m_chunk_size - begin) % step;
+            offset = (m_block_size - begin) % step;
             if (offset)
                 offset = step - offset;
         }
         else
         {
-            offset = (begin - m_chunk_size) % step;
+            offset = (begin - m_block_size) % step;
         }
 
         if (offset)
-			offset = (m_chunk_size - offset + step / m_chunk_size * m_chunk_size) % step;
+			offset = (m_block_size - offset + step / m_block_size * m_block_size) % step;
 
         std::cout << "offset: " << offset << '\n';
 
-        // Create and apply the beginning chunk
+        // Create and apply the beginning block
 		{
-			const uint16_t end_bit = (begin / m_chunk_size == end / m_chunk_size) ? end % m_chunk_size : m_chunk_size;
+			const uint16_t end_bit = (begin / m_block_size == end / m_block_size) ? end % m_block_size : m_block_size;
         	if (value)
         	{
-        		for (uint16_t i = begin % m_chunk_size; i < end_bit; i += step)
-        			*(m_data + begin / m_chunk_size) |= T{ 1 } << i;
+        		for (uint16_t i = begin % m_block_size; i < end_bit; i += step)
+        			*(m_data + begin / m_block_size) |= BlockType{ 1 } << i;
         	}
         	else
         	{
-        		for (uint16_t i = begin % m_chunk_size; i < end_bit; i += step)
-        			*(m_data + begin / m_chunk_size) &= ~(T{ 1 } << i);
+        		for (uint16_t i = begin % m_block_size; i < end_bit; i += step)
+        			*(m_data + begin / m_block_size) &= ~(BlockType{ 1 } << i);
         	}
 		}
 
 
-        // Fill with appropriate chunk
-        std::cout << chunks_size << " chunks\n";
-        std::cout << (std::min)(chunks_size + begin / m_chunk_size, m_storage_size) << " chunks\n";
-        for (uint64_t i = 0; i < (std::min)(chunks_size, m_storage_size); ++i)
+        // Fill with appropriate block
+        std::cout << blocks_size << " blocks\n";
+        std::cout << (std::min)(blocks_size + begin / m_block_size, m_storage_size) << " blocks\n";
+        for (uint64_t i = 0; i < (std::min)(blocks_size, m_storage_size); ++i)
         {
-            // Generate chunk for the current iteration
-            T chunk = 0;
+            // Generate block for the current iteration
+            BlockType block = 0;
 
             if (value)
             {
-                for (uint16_t j = !i ? offset : 0; j < m_chunk_size; ++j)
+                for (uint16_t j = !i ? offset : 0; j < m_block_size; ++j)
                 {
-                    std::cout << current_chunk * m_chunk_size + j - offset << '\n';
-                    if (!((current_chunk * m_chunk_size + j - offset) % step))
-                        chunk |= T{ 1 } << j;
+                    std::cout << current_block * m_block_size + j - offset << '\n';
+                    if (!((current_block * m_block_size + j - offset) % step))
+                        block |= BlockType{ 1 } << j;
                 }
             }
             else
             {
-                chunk = (std::numeric_limits<T>::max)();
-                for (uint16_t j = (!i ? offset : 0); j < m_chunk_size; ++j)
+                block = (std::numeric_limits<BlockType>::max)();
+                for (uint16_t j = (!i ? offset : 0); j < m_block_size; ++j)
                 {
-                    if (!((current_chunk * m_chunk_size + j - offset) % step))
-                        chunk &= ~(T{ 1 } << j);
+                    if (!((current_block * m_block_size + j - offset) % step))
+                        block &= ~(BlockType{ 1 } << j);
                 }
             }
 
-            // print the chunk
-            for (uint16_t j = 0; j < m_chunk_size; ++j)
+            // print the block
+            for (uint16_t j = 0; j < m_block_size; ++j)
             {
-                std::cout << ((chunk & T{ 1 } << j) >> j);
+                std::cout << ((block & BlockType{ 1 } << j) >> j);
             }
 
             std::cout << '\n';
 
-            // Apply the chunk
-            for (uint64_t j = current_chunk; j < m_storage_size; ++j)
+            // Apply the block
+            for (uint64_t j = current_block; j < m_storage_size; ++j)
             {
-	            if (j == end_chunk - 1 && end % m_chunk_size)
+	            if (j == end_block - 1 && end % m_block_size)
 	            {
 	            	// Remove bits that overflow the range
 					if (value)
 					{
-						for (uint16_t k = end % m_chunk_size; k < m_chunk_size; ++k)
-							chunk &= ~(T{ 1 } << k);
-						*(m_data + j) |= chunk;
+						for (uint16_t k = end % m_block_size; k < m_block_size; ++k)
+							block &= ~(BlockType{ 1 } << k);
+						*(m_data + j) |= block;
 					}
 					else
 					{
-						for (uint16_t k = end % m_chunk_size; k < m_chunk_size; ++k)
-							chunk |= T{ 1 } << k;
-						*(m_data + j) &= chunk;
+						for (uint16_t k = end % m_block_size; k < m_block_size; ++k)
+							block |= BlockType{ 1 } << k;
+						*(m_data + j) &= block;
 					}
 					break;
 				}
 				if (value)
-					*(m_data + j) |= chunk;
+					*(m_data + j) |= block;
 				else
-					*(m_data + j) &= chunk;
+					*(m_data + j) &= block;
 			}
-            ++current_chunk;
+            ++current_block;
         }
     }
 
@@ -540,75 +754,84 @@ public:
      * @param end End of the range to fill (bit index)
      * @param step Step size between the bits to fill
     */
-    void set_in_range_fastest(const bool& value, const uint64_t& begin, const uint64_t& end, const uint64_t& step) noexcept
+    void fill_in_range_fastest(const uint64_t& begin, const uint64_t& end, const uint64_t& step, const bool& value = true) noexcept
     {
         if (step == 1)
         {
-            set_in_range(value, begin, end);
+            fill_in_range(begin, end, value);
             return;
         }
-        if (step <= m_chunk_size * 2.5) // approximately up until this point it is faster, though no scientific anything went into this, just a guess lol
+        if (step <= m_block_size * 2.5) // approximately up until this point it is faster, though no scientific anything went into this, just a guess lol
         {
             fill_in_range_optimized(value, begin, end, step);
             return;
         }
-        set_in_range(value, begin, end, step);
+        fill_in_range(value, begin, end, step);
     }
 
     /**
-     * Sets the chunk at the specified index to the specified value
-     * @param chunk Chunk to set (chunk value)
-     * @param index Index of the chunk to set (chunk index)
+     * Sets the block at the specified index to the specified value (default is max value, all bits set to 1)
+     * @param block Chunk to set (block value)
+     * @param index Index of the block to set (block index)
      */
-    void set_chunk(const T& chunk, const uint64_t& index) noexcept
+    void set_block(const uint64_t& index, const BlockType& block = (std::numeric_limits<BlockType>::max)()) noexcept
     {
-        *(m_data + index) = chunk;
+        *(m_data + index) = block;
+    }
+
+	/**
+	 * Sets the block at the specified index to 0 (all bits set to 0)
+	 * @param index Index of the block to reset (block index)
+	 */
+	void reset_block(const uint64_t& index) noexcept
+    {
+        *(m_data + index) = 0u;
     }
 
     /**
-     * Fills all the chunks with the specified chunk
-     * @param chunk Chunk to fill the chunks with (chunk value)
+     * Fills all the blocks with the specified block
+     * @param block Chunk to fill the blocks with (block value)
      */
-    void fill_chunk(const T& chunk) noexcept
+    void fill_block(const BlockType& block) noexcept
     {
         for (uint64_t i = 0; i < m_storage_size; ++i)
-            *(m_data + i) = chunk;
+            *(m_data + i) = block;
     }
 
     /**
-     * Fills all the bits in the specified range with the specified chunk
-     * @param chunk Chunk to fill the bits with (chunk value)
-     * @param end End of the range to fill (chunk index)
+     * Fills all the bits in the specified range with the specified block
+     * @param block Chunk to fill the bits with (block value)
+     * @param end End of the range to fill (block index)
      */
-    void fill_chunk_in_range(const T& chunk, const uint64_t& end) noexcept
+    void fill_block_in_range(const uint64_t& end, const BlockType& block = (std::numeric_limits<BlockType>::max)()) noexcept
     {
         for (uint64_t i = 0; i < end; ++i)
-			*(m_data + i) = chunk;
+			*(m_data + i) = block;
     }
 
     /**
-     * Fills all the bits in the specified range with the specified chunk
-     * @param chunk Chunk to fill the bits with
-     * @param begin begin of the range to fill (chunk index)
-     * @param end End of the range to fill (chunk index)
+     * Fills all the bits in the specified range with the specified block
+     * @param block Chunk to fill the bits with
+     * @param begin begin of the range to fill (block index)
+     * @param end End of the range to fill (block index)
      */
-    void fill_chunk_in_range(const T& chunk, const uint64_t& begin, const uint64_t& end) noexcept
+    void fill_block_in_range(const uint64_t& begin, const uint64_t& end, const BlockType& block = (std::numeric_limits<BlockType>::max)()) noexcept
     {
         for (uint64_t i = begin; i < end; ++i)
-            *(m_data + i) = chunk;
+            *(m_data + i) = block;
     }
 
     /**
-     * Fills all the bits in the specified range with the specified chunk
-     * @param chunk Chunk to fill the bits with (chunk value)
-     * @param begin begin of the range to fill (chunk index)
-     * @param end End of the range to fill (chunk index)
-     * @param step Step size between the bits to fill (chunk step)
+     * Fills all the bits in the specified range with the specified block
+     * @param block Chunk to fill the bits with (block value)
+     * @param begin begin of the range to fill (block index)
+     * @param end End of the range to fill (block index)
+     * @param step Step size between the bits to fill (block step)
      */
-    void fill_chunk_in_range(const T& chunk, const uint64_t& begin, const uint64_t& end, const uint64_t& step) noexcept
+    void fill_block_in_range(const uint64_t& begin, const uint64_t& end, const uint64_t& step, const BlockType& block = (std::numeric_limits<BlockType>::max)()) noexcept
     {
         for (uint64_t i = begin; i < end; i += step)
-            *(m_data + i) = chunk;
+            *(m_data + i) = block;
     }
 
     /**
@@ -617,7 +840,7 @@ public:
      */
     void flip(const uint64_t& index) noexcept
     {
-	    *(m_data + index / m_chunk_size) ^= T{ 1 } << index % m_chunk_size;
+	    *(m_data + index / m_block_size) ^= BlockType{ 1 } << (m_block_size - index % m_block_size);
 	}
 
     /**
@@ -635,11 +858,11 @@ public:
      */
     void flip_in_range(const uint64_t& end) noexcept
     {
-		// flip chunks that are in range by bulk, rest flip normally
-		for (uint64_t i = 0; i < end / m_chunk_size; ++i)
+		// flip blocks that are in range by bulk, rest flip normally
+		for (uint64_t i = 0; i < end / m_block_size; ++i)
 			*(m_data + i) = ~*(m_data + i);
-        for (uint16_t i = 0; i < end % m_chunk_size; ++i)
-			*(m_data + end / m_chunk_size) ^= T{ 1 } << i;
+        for (uint16_t i = 0; i < end % m_block_size; ++i)
+			*(m_data + end / m_block_size) ^= BlockType{ 1 } << i;
     }
 
     /**
@@ -650,21 +873,21 @@ public:
     void flip_in_range(const uint64_t& begin, const uint64_t& end) noexcept
     {
         uint64_t to_add = 1;
-        if (begin % m_chunk_size)
+        if (begin % m_block_size)
         {
-            for (uint16_t i = begin % m_chunk_size; i < m_chunk_size; ++i)
-                *(m_data + begin / m_chunk_size) ^= T{ 1 } << i;
+            for (uint16_t i = begin % m_block_size; i < m_block_size; ++i)
+                *(m_data + begin / m_block_size) ^= BlockType{ 1 } << i;
         }
 		else
 			to_add = 0;
 
-		for (uint64_t i = begin / m_chunk_size + to_add; i < end / m_chunk_size; ++i)
+		for (uint64_t i = begin / m_block_size + to_add; i < end / m_block_size; ++i)
 			*(m_data + i) = ~*(m_data + i);
 
-        if (end % m_chunk_size)
+        if (end % m_block_size)
         {
-            for (uint16_t i = 0; i < end % m_chunk_size; ++i)
-				*(m_data + end / m_chunk_size) ^= T{ 1 } << i;
+            for (uint16_t i = 0; i < end % m_block_size; ++i)
+				*(m_data + end / m_block_size) ^= BlockType{ 1 } << i;
         }
     }
 
@@ -678,55 +901,55 @@ public:
     {
         for (uint64_t i = begin; i < end; i += step)
         {
-            *(m_data + i / m_chunk_size) ^= T{ 1 } << i % m_chunk_size;
+            *(m_data + i / m_block_size) ^= BlockType{ 1 } << i % m_block_size;
         }
     }
 
     /**
-     * Flips the chunk at the specified index
-     * @param index Index of the chunk to flip (chunk index)
+     * Flips the block at the specified index
+     * @param index Index of the block to flip (block index)
      */
-    void flip_chunk(const uint64_t& index) noexcept
+    void flip_block(const uint64_t& index) noexcept
     {
 	    *(m_data + index) = ~*(m_data + index);
     }
 
     /**
-     * Flips all the chunks (same as flip())
+     * Flips all the blocks (same as flip())
      */
-    void flip_chunk() noexcept
+    void flip_block() noexcept
     {
         flip();
     }
 
     /**
-     * Flips all the chunks in the specified range
-     * @param end End of the range to fill (chunk index)
+     * Flips all the blocks in the specified range
+     * @param end End of the range to fill (block index)
      */
-    void flip_chunk_in_range(const uint64_t& end)
+    void flip_block_in_range(const uint64_t& end)
     {
         for (uint64_t i = 0; i < end; ++i)
             *(m_data + i) = ~*(m_data + i);
     }
 
     /**
-     * Flips all the chunks in the specified range
-     * @param begin Begin of the range to fill (chunk index)
-     * @param end End of the range to fill (chunk index)
+     * Flips all the blocks in the specified range
+     * @param begin Begin of the range to fill (block index)
+     * @param end End of the range to fill (block index)
      */
-    void flip_chunk_in_range(const uint64_t& begin, const uint64_t& end)
+    void flip_block_in_range(const uint64_t& begin, const uint64_t& end)
     {
         for (uint64_t i = begin; i < end; ++i)
             *(m_data + i) = ~*(m_data + i);
     }
 
     /**
-     * Flips all the chunks in the specified range
-     * @param begin Begin of the range to fill (chunk index)
-     * @param end End of the range to fill (chunk index)
-     * @param step Step size between the bits to flip (chunk step)
+     * Flips all the blocks in the specified range
+     * @param begin Begin of the range to fill (block index)
+     * @param end End of the range to fill (block index)
+     * @param step Step size between the bits to flip (block step)
      */
-    void flip_chunk_in_range(const uint64_t& begin, const uint64_t& end, const uint64_t& step)
+    void flip_block_in_range(const uint64_t& begin, const uint64_t& end, const uint64_t& step)
     {
         for (uint64_t i = begin; i < end; i += step)
             *(m_data + i) = ~*(m_data + i);
@@ -737,27 +960,27 @@ public:
      * @param index The index of the bit to read (bit index)
      * @return The value of the bit at the specified index
      */
-    [[nodiscard]] bool get(const uint64_t& index) const noexcept
+    [[nodiscard]] bool test(const uint64_t& index) const noexcept
     {
-        return *(m_data + index / m_chunk_size) & T { 1 } << index % m_chunk_size;
+        return *(m_data + index / m_block_size) & BlockType{ 1 } << (m_block_size - index % m_block_size);
     }
 
     /**
-     * Retrieves the chunk at the specified index
-     * @param index Index of the chunk to retrieve (chunk index)
+     * Retrieves the block at the specified index
+     * @param index Index of the block to retrieve (block index)
      * @return Chunk at the specified index
      */
-    [[nodiscard]] const T& get_chunk(const uint64_t& index) const noexcept
+    [[nodiscard]] const BlockType& get_block(const uint64_t& index) const noexcept
     {
 	    return *(m_data + index);
 	}
 
     /**
-     * Retrieves the chunk at the specified index
-     * @param index Index of the chunk to retrieve (chunk index)
+     * Retrieves the block at the specified index
+     * @param index Index of the block to retrieve (block index)
      * @return Chunk at the specified index
      */
-    [[nodiscard]] T& get_chunk(const uint64_t& index) noexcept
+    [[nodiscard]] BlockType& get_block(const uint64_t& index) noexcept
     {
         return *(m_data + index);
     }
@@ -769,17 +992,17 @@ public:
      */
     [[nodiscard]] bool all() const noexcept
     {
-        // check all except the last one if the size is not divisible by m_chunk_size
-        for (T* i = m_data; i < m_data + m_storage_size - (m_size % m_chunk_size ? 1 : 0); ++i)
+        // check all except the last one if the size is not divisible by m_block_size
+        for (BlockType* i = m_data; i < m_data + m_storage_size - (m_size % m_block_size ? 1 : 0); ++i)
         {
-            if (*i != (std::numeric_limits<T>::max)())
+            if (*i != (std::numeric_limits<BlockType>::max)())
                 return false;
         }
-        if (m_size % m_chunk_size)
+        if (m_size % m_block_size)
         {
-            for (uint16_t i = 0; i < m_size % m_chunk_size; ++i)
+            for (uint16_t i = 0; i < m_size % m_block_size; ++i)
             {
-                if (!(*(m_data + m_size / m_chunk_size) & T{ 1 } << i))
+                if (!(*(m_data + m_size / m_block_size) & BlockType{ 1 } << i))
                     return false;
             }
         }
@@ -792,16 +1015,16 @@ public:
      */
     [[nodiscard]] bool any() const noexcept
     {
-        for (T* i = m_data; i < m_data + m_storage_size - (m_size % m_chunk_size ? 1 : 0); ++i)
+        for (BlockType* i = m_data; i < m_data + m_storage_size - (m_size % m_block_size ? 1 : 0); ++i)
         {
             if (*i)
                 return true;
         }
-        if (m_size % m_chunk_size)
+        if (m_size % m_block_size)
 		{
-			for (uint16_t i = 0; i < m_size % m_chunk_size; ++i)
+			for (uint16_t i = 0; i < m_size % m_block_size; ++i)
 			{
-				if (*(m_data + m_size / m_chunk_size) & T{ 1 } << i)
+				if (*(m_data + m_size / m_block_size) & BlockType{ 1 } << i)
 					return true;
 			}
 		}
@@ -814,7 +1037,7 @@ public:
      */
     [[nodiscard]] bool none() const noexcept
     {
-        for (T* i = m_data; i < m_data + m_storage_size; ++i)
+        for (BlockType* i = m_data; i < m_data + m_storage_size; ++i)
         {
             if (*i)
                 return false;
@@ -823,10 +1046,10 @@ public:
     }
 
     /**
-     * Checks if all bits are cleared (none are set)
-     * @return true if all bits are cleared, false otherwise
+     * Checks if all bits are reseted (none are set)
+     * @return true if all bits are reseted, false otherwise
      */
-    [[nodiscard]] bool all_clear() const noexcept
+    [[nodiscard]] bool all_reset() const noexcept
     {
         return none();
     }
@@ -837,9 +1060,9 @@ public:
     [[nodiscard]] uint64_t count() const noexcept
     {
         uint64_t count = 0;
-        for (T* i = m_data; i < m_data + m_storage_size; ++i)
+        for (BlockType* i = m_data; i < m_data + m_storage_size; ++i)
         {
-            T j = *i;
+            BlockType j = *i;
             while (j)
             {
                 j &= j - 1;
@@ -864,16 +1087,16 @@ public:
      */
     void push_back(const bool& value)
 	{
-		if (m_size % m_chunk_size)
+		if (m_size % m_block_size)
 		{
 			if (value)
-				*(m_data + m_size / m_chunk_size) |= T{ 1 } << m_size % m_chunk_size;
+				*(m_data + m_size / m_block_size) |= BlockType{ 1 } << m_size % m_block_size;
 			else
-				*(m_data + m_size / m_chunk_size) &= ~(T{ 1 } << m_size % m_chunk_size);
+				*(m_data + m_size / m_block_size) &= ~(BlockType{ 1 } << m_size % m_block_size);
 		}
 		else
 		{
-			T* new_data = new T[m_storage_size + 1];
+			BlockType* new_data = new BlockType[m_storage_size + 1];
             if (m_data)
             {
                 std::copy(m_data, m_data + m_storage_size, new_data);
@@ -892,9 +1115,9 @@ public:
     {
         if (m_data)
         {
-            if (!(m_size % m_chunk_size))
+            if (!(m_size % m_block_size))
             {
-                T* new_data = new T[m_storage_size - 1];
+                BlockType* new_data = new BlockType[m_storage_size - 1];
                 std::copy(m_data, m_data + m_storage_size, new_data);
                 delete[] m_data;
                 m_data = new_data;
@@ -905,39 +1128,39 @@ public:
     }
 
     /**
-     * Pushes back a chunk to the Bitset, adjusting the size to the nearest multiple of sizeof(T) upwards. [e.g. 65 bits -> (+8 {chunk} +7 {expanded area} = +15) -> 80 bits]
+     * Pushes back a block to the Bitset, adjusting the size to the nearest multiple of sizeof(BlockType) upwards. [e.g. 65 bits -> (+8 {block} +7 {expanded area} = +15) -> 80 bits]
      * The bits in the expanded area may be initialized by previous calls, but their values are not explicitly defined by this function.
-     * @param chunk The chunk to push back (chunk value)
+     * @param block The block to push back (block value)
      */
-    void push_back_chunk(const T& chunk) noexcept
+    void push_back_block(const BlockType& block) noexcept
     {
-        T* new_data = new T[m_storage_size + (m_size % m_chunk_size ? 2 : 1)];
+        BlockType* new_data = new BlockType[m_storage_size + (m_size % m_block_size ? 2 : 1)];
         if (m_data)
         {
             std::copy(m_data, m_data + m_storage_size, new_data);
             delete[] m_data;
         }
         m_data = new_data;
-        *(m_data + m_storage_size++) = chunk;
-        m_size += m_chunk_size + (m_size % m_chunk_size ? m_chunk_size - m_size % m_chunk_size : 0);
+        *(m_data + m_storage_size++) = block;
+        m_size += m_block_size + (m_size % m_block_size ? m_block_size - m_size % m_block_size : 0);
     }
 
     /**
-     * Removes the last chunk from the bitset, adjusting the size to the nearest lower multiple of sizeof(T). [e.g. 65 bits -> 64 bits -> 56 bits]
+     * Removes the last block from the bitset, adjusting the size to the nearest lower multiple of sizeof(BlockType). [e.g. 65 bits -> 64 bits -> 56 bits]
      */
-    void pop_back_chunk() noexcept
+    void pop_back_block() noexcept
     {
         if (m_data)
         {
-            if (m_size % m_chunk_size)
-                m_size = (m_storage_size - 1) * m_chunk_size;
+            if (m_size % m_block_size)
+                m_size = (m_storage_size - 1) * m_block_size;
             
-            T* new_data = new T[m_storage_size - 1];
+            BlockType* new_data = new BlockType[m_storage_size - 1];
             std::copy(m_data, m_data + m_storage_size - 1, new_data);
             delete[] m_data;
             m_data = new_data;
             --m_storage_size;
-            m_size -= m_chunk_size;
+            m_size -= m_block_size;
         }
         // else throw error in safe version
     }
@@ -957,7 +1180,7 @@ public:
 			return;
 		}
 		const uint64_t new_storage_size = calculate_storage_size(new_size);
-		T* new_data = new T[new_storage_size];
+		BlockType* new_data = new BlockType[new_storage_size];
 		if (m_data)
 		{
 			std::copy(m_data, m_data + m_storage_size, new_data);
@@ -969,39 +1192,31 @@ public:
 	}
 
     /**
-     * Returns the size of the Bitset in bits
-     */
-    [[nodiscard]] uint64_t size() const noexcept
-	{
-		return m_size;
-	}
-
-    /**
-     * Returns the number of chunks the bitset would utilize for given size
+     * Returns the number of blocks the bitset would utilize for given size
      * @param size Size of the target bitset in bits
-     * @return The number of chunks the bitset would utilize for the given size
+     * @return The number of blocks the bitset would utilize for the given size
      */
     [[nodiscard]] inline static constexpr uint64_t calculate_storage_size(const uint64_t& size) noexcept
     {
-        return size / (sizeof(T) * 8) + (size % (sizeof(T) * 8) ? 1 : 0);
+        return size / (sizeof(BlockType) * 8) + (size % (sizeof(BlockType) * 8) ? 1 : 0);
     }
 
 	/**
-	 * Creates a chunk of type T based on the given boolean value.
+	 * Creates a block of type T based on the given boolean value.
 	 *
-	 * @param value A boolean value indicating whether to create the chunk with the maximum value or zero.
-	 * @return The created chunk of type T. If value is true, returns the maximum value representable by type T,
+	 * @param value A boolean value indicating whether to create the block with the maximum value or zero.
+	 * @return The created block of type T. If value is true, returns the maximum value representable by type T,
 	 *         otherwise returns zero.
 	 */
-    [[nodiscard]] inline static constexpr T create_filled_chunk(const bool& value)
+    [[nodiscard]] inline static constexpr BlockType create_filled_block(const bool& value)
     {
-        return value ? (std::numeric_limits<T>::max)() : 0u;
+        return value ? (std::numeric_limits<BlockType>::max)() : 0u;
     }
 
 	/**
-	 * Underlying array of chunks containing the bits
+	 * Underlying array of blocks containing the bits
 	 */
-	alignas(std::hardware_destructive_interference_size) T* m_data;
+	alignas(std::hardware_destructive_interference_size) BlockType* m_data;
 
 	/**
 	 * Size of the bitset in bits
@@ -1009,17 +1224,17 @@ public:
 	uint64_t m_size;
 
 	/**
-	 * Size of the bitset in chunks
+	 * Size of the bitset in blocks
 	 */
 	uint64_t m_storage_size;
 
 	/**
 	 * Bit-length of the underlying type
 	 */
-	static constexpr uint16_t m_chunk_size = sizeof(T) * 8;
+	static constexpr uint16_t m_block_size = sizeof(BlockType) * 8;
 };
 
-template <UnsignedInteger T, uint64_t Size>
+template <UnsignedInteger BlockType, uint64_t Size>
 class CBitSet
 {
 public:
@@ -1030,26 +1245,26 @@ public:
 
     /**
      * Initializer list constructor
-     * @param list Initializer list to fill the CBitSet with, must contain *chunks* not bits
+     * @param list Initializer list to fill the CBitSet with, must contain *blocks* not bits
      */
-    constexpr CBitSet(const std::initializer_list<T> list) noexcept
+    constexpr CBitSet(const std::initializer_list<BlockType> list) noexcept
     {
         std::copy(list.begin(), list.end(), m_data);
     }
 
     /**
 	 * Chunk value constructor
-	 * @param chunk Chunk to fill the bitset with (chunk value)
+	 * @param block Chunk to fill the bitset with (block value)
 	 */
-    constexpr CBitSet(const T& chunk) noexcept
+    constexpr CBitSet(const BlockType& block) noexcept
 	{
         if (std::is_constant_evaluated())
         {
             for (uint64_t i = 0; i < m_storage_size; ++i)
-                m_data[i] = chunk;
+                m_data[i] = block;
         }
         else
-			std::fill(m_data, m_data + m_storage_size, chunk);
+			std::fill(m_data, m_data + m_storage_size, block);
 	}
 
     /**
@@ -1058,7 +1273,7 @@ public:
      */
     constexpr CBitSet(const CBitSet& other) noexcept
     {
-        std::copy(other.m_data, other.m_data + other.m_size / m_chunk_size + (other.m_size % m_chunk_size ? 1 : 0), m_data);
+        std::copy(other.m_data, other.m_data + other.m_size / m_block_size + (other.m_size % m_block_size ? 1 : 0), m_data);
     }
 
     /**
@@ -1073,7 +1288,7 @@ public:
      */
     [[nodiscard]] constexpr bool operator[](const uint64_t& index) const noexcept
     {
-        return get(index);
+        return m_data[index / m_block_size] & BlockType{ 1 } << (m_block_size - index % m_block_size);
     }
 
     /**
@@ -1097,9 +1312,9 @@ public:
     constexpr void set(const bool& value, const uint64_t& index) noexcept
     {
         if (value)
-            m_data[index / m_chunk_size] |= T{ 1 } << index % m_chunk_size;
+            m_data[index / m_block_size] |= BlockType{ 1 } << (m_block_size - index % m_block_size);
         else
-            m_data[index / m_chunk_size] &= ~(T{ 1 } << index % m_chunk_size);
+            m_data[index / m_block_size] &= ~(BlockType{ 1 } << (m_block_size - index % m_block_size));
     }
 
     /**
@@ -1108,16 +1323,16 @@ public:
      */
     constexpr void set(const uint64_t& index) noexcept
     {
-        m_data[index / m_chunk_size] |= T{1} << index % m_chunk_size;
+        m_data[index / m_block_size] |= BlockType{1} << (m_block_size - index % m_block_size);
     }
 
     /**
      * Sets the bit at the specified index to 0 (false)
-     * @param index Index of the bit to clear (bit index)
+     * @param index Index of the bit to reset (bit index)
      */
-    constexpr void clear(const uint64_t& index) noexcept
+    constexpr void reset(const uint64_t& index) noexcept
     {
-        m_data[index / m_chunk_size] &= ~(T{ 1 } << index % m_chunk_size);
+        m_data[index / m_block_size] &= ~(BlockType{ 1 } << (m_block_size - index % m_block_size));
     }
 
     /**
@@ -1128,23 +1343,23 @@ public:
     {
         if (std::is_constant_evaluated())
     	{
-            for (T& i : m_data)
-                i = value ? (std::numeric_limits<T>::max)() : 0;
+            for (BlockType& i : m_data)
+                i = value ? (std::numeric_limits<BlockType>::max)() : 0;
         }
         else
         {
-            ::memset(m_data, value ? 0xFF : 0, m_storage_size * sizeof(T));
+            ::memset(m_data, value ? 0xFF : 0, m_storage_size * sizeof(BlockType));
         }
     }
 
     /**
      * Clears all the bits (sets all bits to 0)
      */
-    constexpr void clear() noexcept
+    constexpr void reset() noexcept
     {
         if (std::is_constant_evaluated())
         {
-			for (T& i : m_data)
+			for (BlockType& i : m_data)
                 i = 0;
         }
         else
@@ -1158,11 +1373,11 @@ public:
     {
         if (std::is_constant_evaluated())
         {
-            for (T& i : m_data)
-                i = (std::numeric_limits<T>::max)();
+            for (BlockType& i : m_data)
+                i = (std::numeric_limits<BlockType>::max)();
         }
         else
-	        ::memset(m_data, 0xFF, m_storage_size * sizeof(T));
+	        ::memset(m_data, 0xFF, m_storage_size * sizeof(BlockType));
     }
 
     /**
@@ -1174,22 +1389,22 @@ public:
     {
         if (std::is_constant_evaluated())
         {
-            for (uint64_t i = 0; i < end / m_chunk_size; ++i)
-                m_data[i] = value ? (std::numeric_limits<T>::max)() : 0;
+            for (uint64_t i = 0; i < end / m_block_size; ++i)
+                m_data[i] = value ? (std::numeric_limits<BlockType>::max)() : 0;
         }
         else
-			::memset(m_data, value ? 255u : 0, end / m_chunk_size * sizeof(T));
-        if (end % m_chunk_size)
+			::memset(m_data, value ? 255u : 0, end / m_block_size * sizeof(BlockType));
+        if (end % m_block_size)
         {
             if (value)
             {
-                for (uint16_t i = 0; i < end % m_chunk_size; ++i)
-                    m_data[end / m_chunk_size] |= T{ 1 } << i;
+                for (uint16_t i = 0; i < end % m_block_size; ++i)
+                    m_data[end / m_block_size] |= BlockType{ 1 } << i;
             }
             else if (!value)
             {
-                for (uint16_t i = 0; i < end % m_chunk_size; ++i)
-                    m_data[end / m_chunk_size] &= ~(T{ 1 } << i);
+                for (uint16_t i = 0; i < end % m_block_size; ++i)
+                    m_data[end / m_block_size] &= ~(BlockType{ 1 } << i);
             }
         }
     }
@@ -1198,13 +1413,13 @@ public:
      * Fills all the bits in the specified range with 0 (false)
      * @param end End of the range to fill (bit index)
      */
-    constexpr void clear_in_range(const uint64_t& end) noexcept
+    constexpr void reset_in_range(const uint64_t& end) noexcept
     {
-        ::memset(m_data, 0, end / m_chunk_size * sizeof(T));
-        if (end % m_chunk_size)
+        ::memset(m_data, 0, end / m_block_size * sizeof(BlockType));
+        if (end % m_block_size)
         {
-            for (uint16_t i = 0; i < end % m_chunk_size; ++i)
-                m_data[end / m_chunk_size] &= ~(T{ 1 } << i);
+            for (uint16_t i = 0; i < end % m_block_size; ++i)
+                m_data[end / m_block_size] &= ~(BlockType{ 1 } << i);
         }
     }
 
@@ -1214,11 +1429,11 @@ public:
      */
     constexpr void set_in_range(const uint64_t& end) noexcept
     {
-        ::memset(m_data, (std::numeric_limits<T>::max)(), end / m_chunk_size * sizeof(T));
-        if (end % m_chunk_size)
+        ::memset(m_data, (std::numeric_limits<BlockType>::max)(), end / m_block_size * sizeof(BlockType));
+        if (end % m_block_size)
         {
-            for (uint16_t i = 0; i < end % m_chunk_size; ++i)
-                m_data[end / m_chunk_size] |= T{ 1 } << i;
+            for (uint16_t i = 0; i < end % m_block_size; ++i)
+                m_data[end / m_block_size] |= BlockType{ 1 } << i;
         }
     }
 
@@ -1230,49 +1445,49 @@ public:
      */
     constexpr void fill_in_range(const bool& value, const uint64_t& begin, const uint64_t& end) noexcept
     {
-        constexpr T max_value = (std::numeric_limits<T>::max)();
+        constexpr BlockType max_value = (std::numeric_limits<BlockType>::max)();
         uint8_t to_add = 1, to_sub = 1;
-        // create begin_chunk and fill the first byte with it
-        if (begin % m_chunk_size)
+        // create begin_block and fill the first byte with it
+        if (begin % m_block_size)
         {
-            const uint16_t end_bit = (begin / m_chunk_size == end / m_chunk_size) ? end % m_chunk_size : m_chunk_size;
+            const uint16_t end_bit = (begin / m_block_size == end / m_block_size) ? end % m_block_size : m_block_size;
             if (value)
             {
-                for (uint16_t i = begin % m_chunk_size; i < end_bit; ++i)
-                    m_data[begin / m_chunk_size] |= T{ 1 } << i;
+                for (uint16_t i = begin % m_block_size; i < end_bit; ++i)
+                    m_data[begin / m_block_size] |= BlockType{ 1 } << i;
             }
             else
             {
-                for (uint16_t i = begin % m_chunk_size; i < end_bit; ++i)
-                    m_data[begin / m_chunk_size] &= ~(T{ 1 } << i);
+                for (uint16_t i = begin % m_block_size; i < end_bit; ++i)
+                    m_data[begin / m_block_size] &= ~(BlockType{ 1 } << i);
             }
         }
         else
             to_add = 0;
 
-        // set the end chunk if the end is not aligned with the chunk size
-        if (end % m_chunk_size && begin / m_chunk_size != end / m_chunk_size)
+        // set the end block if the end is not aligned with the block size
+        if (end % m_block_size && begin / m_block_size != end / m_block_size)
         {
             if (value)
             {
-                for (uint16_t i = 0; i < end % m_chunk_size; ++i)
-                    m_data[end / m_chunk_size] |= T{ 1 } << i;
+                for (uint16_t i = 0; i < end % m_block_size; ++i)
+                    m_data[end / m_block_size] |= BlockType{ 1 } << i;
             }
             else
             {
-                for (uint16_t i = 0; i < end % m_chunk_size; ++i)
-                    m_data[end / m_chunk_size] &= ~(T{ 1 } << i);
+                for (uint16_t i = 0; i < end % m_block_size; ++i)
+                    m_data[end / m_block_size] &= ~(BlockType{ 1 } << i);
             }
         }
         else
             to_sub = 0;
         if (std::is_constant_evaluated())
         {
-            for (uint64_t i = begin / m_chunk_size + to_add; i < (end - begin) / m_chunk_size * sizeof(T) - to_sub; ++i)
+            for (uint64_t i = begin / m_block_size + to_add; i < (end - begin) / m_block_size * sizeof(BlockType) - to_sub; ++i)
                 m_data[i] = value ? max_value : 0;
         }
         else
-			::memset(m_data + begin / m_chunk_size + to_add, value ? max_value : 0, (end - begin) / m_chunk_size * sizeof(T) - to_sub);
+			::memset(m_data + begin / m_block_size + to_add, value ? max_value : 0, (end - begin) / m_block_size * sizeof(BlockType) - to_sub);
     }
 
     /**
@@ -1280,34 +1495,34 @@ public:
      * @param begin Begin of the range to fill (bit index)
      * @param end End of the range to fill (bit index)
      */
-    constexpr void clear_in_range(const uint64_t& begin, const uint64_t& end) noexcept
+    constexpr void reset_in_range(const uint64_t& begin, const uint64_t& end) noexcept
     {
         uint8_t to_add = 1, to_sub = 1;
-        // create begin_chunk and fill the first byte with it
-        if (begin % m_chunk_size)
+        // create begin_block and fill the first byte with it
+        if (begin % m_block_size)
         {
-            const uint16_t end_bit = begin / m_chunk_size == end / m_chunk_size ? end % m_chunk_size : m_chunk_size;
-            for (uint16_t i = begin % m_chunk_size; i < end_bit; ++i)
-                m_data[end / m_chunk_size] &= ~(T{ 1 } << i);
+            const uint16_t end_bit = begin / m_block_size == end / m_block_size ? end % m_block_size : m_block_size;
+            for (uint16_t i = begin % m_block_size; i < end_bit; ++i)
+                m_data[end / m_block_size] &= ~(BlockType{ 1 } << i);
         }
         else
             to_add = 0;
 
-        // set the end chunk if the end is not aligned with the chunk size
-        if (end % m_chunk_size && begin / m_chunk_size != end / m_chunk_size)
+        // set the end block if the end is not aligned with the block size
+        if (end % m_block_size && begin / m_block_size != end / m_block_size)
         {
-            for (uint16_t i = 0; i < end % m_chunk_size; ++i)
-                m_data[end / m_chunk_size] &= ~(T{ 1 } << i);
+            for (uint16_t i = 0; i < end % m_block_size; ++i)
+                m_data[end / m_block_size] &= ~(BlockType{ 1 } << i);
         }
         else
             to_sub = 0;
         if (std::is_constant_evaluated())
         {
-            for (uint64_t i = begin / m_chunk_size + to_add; i < (end - begin) / m_chunk_size * sizeof(T) - to_sub; ++i)
+            for (uint64_t i = begin / m_block_size + to_add; i < (end - begin) / m_block_size * sizeof(BlockType) - to_sub; ++i)
                 m_data[i] = 0;
         }
         else
-			::memset(m_data + begin / m_chunk_size + to_add, 0, (end - begin) / m_chunk_size * sizeof(T) - to_sub);
+			::memset(m_data + begin / m_block_size + to_add, 0, (end - begin) / m_block_size * sizeof(BlockType) - to_sub);
     }
 
     /**
@@ -1317,33 +1532,33 @@ public:
      */
     constexpr void set_in_range(const uint64_t& begin, const uint64_t& end) noexcept
     {
-        constexpr T max_value = (std::numeric_limits<T>::max)();
+        constexpr BlockType max_value = (std::numeric_limits<BlockType>::max)();
         uint8_t to_add = 1, to_sub = 1;
-        // create begin_chunk and fill the first byte with it
-        if (begin % m_chunk_size)
+        // create begin_block and fill the first byte with it
+        if (begin % m_block_size)
         {
-            const uint16_t end_bit = (begin / m_chunk_size == end / m_chunk_size) ? end % m_chunk_size : m_chunk_size;
-            for (uint16_t i = begin % m_chunk_size; i < end_bit; ++i)
-                m_data[begin / m_chunk_size] |= T{ 1 } << i;
+            const uint16_t end_bit = (begin / m_block_size == end / m_block_size) ? end % m_block_size : m_block_size;
+            for (uint16_t i = begin % m_block_size; i < end_bit; ++i)
+                m_data[begin / m_block_size] |= BlockType{ 1 } << i;
         }
         else
             to_add = 0;
 
-        // set the end chunk if the end is not aligned with the chunk size
-        if (end % m_chunk_size && begin / m_chunk_size != end / m_chunk_size)
+        // set the end block if the end is not aligned with the block size
+        if (end % m_block_size && begin / m_block_size != end / m_block_size)
         {
-            for (uint16_t i = 0; i < end % m_chunk_size; ++i)
-                m_data[end / m_chunk_size] |= T{ 1 } << i;
+            for (uint16_t i = 0; i < end % m_block_size; ++i)
+                m_data[end / m_block_size] |= BlockType{ 1 } << i;
         }
         else
             to_sub = 0;
         if (std::is_constant_evaluated())
         {
-            for (uint64_t i = begin / m_chunk_size + to_add; i < (end - begin) / m_chunk_size * sizeof(T) - to_sub; ++i)
+            for (uint64_t i = begin / m_block_size + to_add; i < (end - begin) / m_block_size * sizeof(BlockType) - to_sub; ++i)
                 m_data[i] = max_value;
         }
         else 
-            ::memset(m_data + begin / m_chunk_size + to_add, max_value, (end - begin) / m_chunk_size * sizeof(T) - to_sub);
+            ::memset(m_data + begin / m_block_size + to_add, max_value, (end - begin) / m_block_size * sizeof(BlockType) - to_sub);
     }
 
     /**
@@ -1358,9 +1573,9 @@ public:
         for (uint64_t i = begin; i < end; i += step)
         {
             if (value)
-                m_data[i / m_chunk_size] |= T{ 1 } << i % m_chunk_size;
+                m_data[i / m_block_size] |= BlockType{ 1 } << i % m_block_size;
             else
-                m_data[i / m_chunk_size] &= ~(T{ 1 } << i % m_chunk_size);
+                m_data[i / m_block_size] &= ~(BlockType{ 1 } << i % m_block_size);
         }
     }
 
@@ -1370,10 +1585,10 @@ public:
      * @param end End of the range to fill (bit index)
      * @param step Step size between the bits to fill (bit step)
      */
-    constexpr void clear_in_range(const uint64_t& begin, const uint64_t& end, const uint64_t& step) noexcept
+    constexpr void reset_in_range(const uint64_t& begin, const uint64_t& end, const uint64_t& step) noexcept
     {
         for (uint64_t i = begin; i < end; i += step)
-            m_data[i / m_chunk_size] &= ~(T{ 1 } << i % m_chunk_size);
+            m_data[i / m_block_size] &= ~(BlockType{ 1 } << i % m_block_size);
     }
 
     /**
@@ -1385,7 +1600,7 @@ public:
     constexpr void set_in_range(const uint64_t& begin, const uint64_t& end, const uint64_t& step) noexcept
     {
         for (uint64_t i = begin; i < end; i += step)
-            m_data[i / m_chunk_size] |= T{ 1 } << i % m_chunk_size;
+            m_data[i / m_block_size] |= BlockType{ 1 } << i % m_block_size;
     }
 
     /**
@@ -1393,8 +1608,8 @@ public:
      * Fill the bits in the specified range with the specified value using an optimized algorithm.\n
      * This algorithm is particularly efficient when the step size is relatively low.\n
      * Note: This function has a rather complex implementation. It is not recommended to use it when simple filling without a step is possible.\n
-     * Performance of this function varies significantly depending on the step. It performs best when step is a multiple of m_chunk_size, and is within reasonable range from it.\n
-     * However, worst when step is not aligned with m_chunk_size and end is not aligned with m_chunk_size. In such cases, extra processing is required to handle the boundary chunks.\n
+     * Performance of this function varies significantly depending on the step. It performs best when step is a multiple of m_block_size, and is within reasonable range from it.\n
+     * However, worst when step is not aligned with m_block_size and end is not aligned with m_block_size. In such cases, extra processing is required to handle the boundary blocks.\n
      * @param value Value to fill the bits with (bit value)
      * @param begin Begin of the range to fill (bit index)
      * @param end End of the range to fill (bit index)
@@ -1403,129 +1618,129 @@ public:
     constexpr void fill_in_range_optimized(const bool& value, const uint64_t& begin, const uint64_t& end, const uint64_t& step) noexcept
     {
         // Initialize variables
-        uint64_t chunks_size, current_chunk = begin / m_chunk_size + 1 + step / m_chunk_size, current_offset = 0;
+        uint64_t blocks_size, current_block = begin / m_block_size + 1 + step / m_block_size, current_offset = 0;
         uint16_t offset;
-        const uint64_t end_chunk = end / m_chunk_size + (end % m_chunk_size ? 1 : 0);
+        const uint64_t end_block = end / m_block_size + (end % m_block_size ? 1 : 0);
 
-        // Determine the size of chunks based on step and chunk size
-        if ((step % 2 || step <= m_chunk_size) && m_chunk_size % step) {
-            chunks_size = (std::min)(m_storage_size, step);
+        // Determine the size of blocks based on step and block size
+        if ((step % 2 || step <= m_block_size) && m_block_size % step) {
+            blocks_size = (std::min)(m_storage_size, step);
         }
-        else if (!(m_chunk_size % step))
-            chunks_size = 1;
-        else if (!(step % m_chunk_size))
-            chunks_size = step / m_chunk_size;
+        else if (!(m_block_size % step))
+            blocks_size = 1;
+        else if (!(step % m_block_size))
+            blocks_size = step / m_block_size;
         else
         {
-            // GCD of step and m_chunk_size
-            if (step % m_chunk_size)
+            // GCD of step and m_block_size
+            if (step % m_block_size)
             {
-                uint64_t a = step, b = m_chunk_size, t = m_chunk_size;
+                uint64_t a = step, b = m_block_size, t = m_block_size;
                 while (b) {
                     t = b;
                     b = a % b;
                     a = t;
                 }
-                chunks_size = a;
+                blocks_size = a;
             }
             else
-                chunks_size = 1;
+                blocks_size = 1;
         }
 
         // Calculate the offset
-        if (begin < m_chunk_size)
+        if (begin < m_block_size)
         {
-            offset = (m_chunk_size - begin) % step;
+            offset = (m_block_size - begin) % step;
             if (offset)
                 offset = step - offset;
         }
         else
         {
-            offset = (begin - m_chunk_size) % step;
+            offset = (begin - m_block_size) % step;
         }
 
         if (offset)
-            offset = (m_chunk_size - offset + step / m_chunk_size * m_chunk_size) % step;
+            offset = (m_block_size - offset + step / m_block_size * m_block_size) % step;
 
         std::cout << "offset: " << offset << '\n';
 
-        // Create and apply the beginning chunk
+        // Create and apply the beginning block
         {
-            const uint16_t end_bit = (begin / m_chunk_size == end / m_chunk_size) ? end % m_chunk_size : m_chunk_size;
+            const uint16_t end_bit = (begin / m_block_size == end / m_block_size) ? end % m_block_size : m_block_size;
             if (value)
             {
-                for (uint16_t i = begin % m_chunk_size; i < end_bit; i += step)
-                    *(m_data + begin / m_chunk_size) |= T{ 1 } << i;
+                for (uint16_t i = begin % m_block_size; i < end_bit; i += step)
+                    *(m_data + begin / m_block_size) |= BlockType{ 1 } << i;
             }
             else
             {
-                for (uint16_t i = begin % m_chunk_size; i < end_bit; i += step)
-                    *(m_data + begin / m_chunk_size) &= ~(T{ 1 } << i);
+                for (uint16_t i = begin % m_block_size; i < end_bit; i += step)
+                    *(m_data + begin / m_block_size) &= ~(BlockType{ 1 } << i);
             }
         }
 
 
-        // Fill with appropriate chunk
-        std::cout << chunks_size << " chunks\n";
-        std::cout << (std::min)(chunks_size + begin / m_chunk_size, m_storage_size) << " chunks\n";
-        for (uint64_t i = 0; i < (std::min)(chunks_size, m_storage_size); ++i)
+        // Fill with appropriate block
+        std::cout << blocks_size << " blocks\n";
+        std::cout << (std::min)(blocks_size + begin / m_block_size, m_storage_size) << " blocks\n";
+        for (uint64_t i = 0; i < (std::min)(blocks_size, m_storage_size); ++i)
         {
-            // Generate chunk for the current iteration
-            T chunk = 0;
+            // Generate block for the current iteration
+            BlockType block = 0;
 
             if (value)
             {
-                for (uint16_t j = !i ? offset : 0; j < m_chunk_size; ++j)
+                for (uint16_t j = !i ? offset : 0; j < m_block_size; ++j)
                 {
-                    std::cout << current_chunk * m_chunk_size + j - offset << '\n';
-                    if (!((current_chunk * m_chunk_size + j - offset) % step))
-                        chunk |= T{ 1 } << j;
+                    std::cout << current_block * m_block_size + j - offset << '\n';
+                    if (!((current_block * m_block_size + j - offset) % step))
+                        block |= BlockType{ 1 } << j;
                 }
             }
             else
             {
-                chunk = (std::numeric_limits<T>::max)();
-                for (uint16_t j = (!i ? offset : 0); j < m_chunk_size; ++j)
+                block = (std::numeric_limits<BlockType>::max)();
+                for (uint16_t j = (!i ? offset : 0); j < m_block_size; ++j)
                 {
-                    if (!((current_chunk * m_chunk_size + j - offset) % step))
-                        chunk &= ~(T{ 1 } << j);
+                    if (!((current_block * m_block_size + j - offset) % step))
+                        block &= ~(BlockType{ 1 } << j);
                 }
             }
 
-            // print the chunk
-            for (uint16_t j = 0; j < m_chunk_size; ++j)
+            // print the block
+            for (uint16_t j = 0; j < m_block_size; ++j)
             {
-                std::cout << ((chunk & T{ 1 } << j) >> j);
+                std::cout << ((block & BlockType{ 1 } << j) >> j);
             }
 
             std::cout << '\n';
 
-            // Apply the chunk
-            for (uint64_t j = current_chunk; j < m_storage_size; ++j)
+            // Apply the block
+            for (uint64_t j = current_block; j < m_storage_size; ++j)
             {
-                if (j == end_chunk - 1 && end % m_chunk_size)
+                if (j == end_block - 1 && end % m_block_size)
                 {
                     // Remove bits that overflow the range
                     if (value)
                     {
-                        for (uint16_t k = end % m_chunk_size; k < m_chunk_size; ++k)
-                            chunk &= ~(T{ 1 } << k);
-                        *(m_data + j) |= chunk;
+                        for (uint16_t k = end % m_block_size; k < m_block_size; ++k)
+                            block &= ~(BlockType{ 1 } << k);
+                        *(m_data + j) |= block;
                     }
                     else
                     {
-                        for (uint16_t k = end % m_chunk_size; k < m_chunk_size; ++k)
-                            chunk |= T{ 1 } << k;
-                        *(m_data + j) &= chunk;
+                        for (uint16_t k = end % m_block_size; k < m_block_size; ++k)
+                            block |= BlockType{ 1 } << k;
+                        *(m_data + j) &= block;
                     }
                     break;
                 }
                 if (value)
-                    *(m_data + j) |= chunk;
+                    *(m_data + j) |= block;
                 else
-                    *(m_data + j) &= chunk;
+                    *(m_data + j) &= block;
             }
-            ++current_chunk;
+            ++current_block;
         }
     }
 
@@ -1546,7 +1761,7 @@ public:
             set_in_range(value, begin, end);
             return;
         }
-        if (step <= m_chunk_size * 2.5) // approximately up until this point it is faster, though no scientific anything went into this, just a guess lol
+        if (step <= m_block_size * 2.5) // approximately up until this point it is faster, though no scientific anything went into this, just a guess lol
         {
             fill_in_range_optimized(value, begin, end, step);
             return;
@@ -1555,59 +1770,59 @@ public:
     }
 
     /**
-     * Sets the chunk at the specified index to the specified value
-     * @param chunk Chunk to set (chunk value)
-     * @param index Index of the chunk to set (chunk index)
+     * Sets the block at the specified index to the specified value
+     * @param block Chunk to set (block value)
+     * @param index Index of the block to set (block index)
      */
-    constexpr void set_chunk(const T& chunk, const uint64_t& index) noexcept
+    constexpr void set_block(const BlockType& block, const uint64_t& index) noexcept
     {
-        m_data[index] = chunk;
+        m_data[index] = block;
     }
 
     /**
-     * Fills all the chunks with the specified chunk
-     * @param chunk Chunk to fill the chunks with (chunk value)
+     * Fills all the blocks with the specified block
+     * @param block Chunk to fill the blocks with (block value)
      */
-    constexpr void fill_chunk(const T& chunk) noexcept
+    constexpr void fill_block(const BlockType& block) noexcept
     {
         for (uint64_t i = 0; i < m_storage_size; ++i)
-            m_data[i] = chunk;
+            m_data[i] = block;
     }
 
     /**
-     * Fills all the bits in the specified range with the specified chunk
-     * @param chunk Chunk to fill the bits with (chunk value)
-     * @param end End of the range to fill (chunk index)
+     * Fills all the bits in the specified range with the specified block
+     * @param block Chunk to fill the bits with (block value)
+     * @param end End of the range to fill (block index)
      */
-    constexpr void fill_chunk_in_range(const T& chunk, const uint64_t& end) noexcept
+    constexpr void fill_block_in_range(const BlockType& block, const uint64_t& end) noexcept
     {
         for (uint64_t i = 0; i < end; ++i)
-            m_data[i] = chunk;
+            m_data[i] = block;
     }
 
     /**
-     * Fills all the bits in the specified range with the specified chunk
-     * @param chunk Chunk to fill the bits with
-     * @param begin begin of the range to fill (chunk index)
-     * @param end End of the range to fill (chunk index)
+     * Fills all the bits in the specified range with the specified block
+     * @param block Chunk to fill the bits with
+     * @param begin begin of the range to fill (block index)
+     * @param end End of the range to fill (block index)
      */
-    constexpr void fill_chunk_in_range(const T& chunk, const uint64_t& begin, const uint64_t& end) noexcept
+    constexpr void fill_block_in_range(const BlockType& block, const uint64_t& begin, const uint64_t& end) noexcept
     {
         for (uint64_t i = begin; i < end; ++i)
-            m_data[i] = chunk;
+            m_data[i] = block;
     }
 
     /**
-     * Fills all the bits in the specified range with the specified chunk
-     * @param chunk Chunk to fill the bits with (chunk value)
-     * @param begin begin of the range to fill (chunk index)
-     * @param end End of the range to fill (chunk index)
-     * @param step Step size between the bits to fill (chunk step)
+     * Fills all the bits in the specified range with the specified block
+     * @param block Chunk to fill the bits with (block value)
+     * @param begin begin of the range to fill (block index)
+     * @param end End of the range to fill (block index)
+     * @param step Step size between the bits to fill (block step)
      */
-    constexpr void fill_chunk_in_range(const T& chunk, const uint64_t& begin, const uint64_t& end, const uint64_t& step) noexcept
+    constexpr void fill_block_in_range(const BlockType& block, const uint64_t& begin, const uint64_t& end, const uint64_t& step) noexcept
     {
         for (uint64_t i = begin; i < end; i += step)
-            m_data[i] = chunk;
+            m_data[i] = block;
     }
 
     /**
@@ -1616,7 +1831,7 @@ public:
      */
     constexpr void flip(const uint64_t& index) noexcept
     {
-        m_data[index / m_chunk_size] ^= T{ 1 } << index % m_chunk_size;
+        m_data[index / m_block_size] ^= BlockType{ 1 } << (m_block_size - index % m_block_size);
     }
 
     /**
@@ -1634,11 +1849,11 @@ public:
      */
     constexpr void flip_in_range(const uint64_t& end) noexcept
     {
-        // flip chunks that are in range by bulk, rest flip normally
-        for (uint64_t i = 0; i < end / m_chunk_size; ++i)
+        // flip blocks that are in range by bulk, rest flip normally
+        for (uint64_t i = 0; i < end / m_block_size; ++i)
             m_data[i] = ~m_data[i];
-        for (uint16_t i = 0; i < end % m_chunk_size; ++i)
-            m_data[end / m_chunk_size] ^= T{ 1 } << i;
+        for (uint16_t i = 0; i < end % m_block_size; ++i)
+            m_data[end / m_block_size] ^= BlockType{ 1 } << i;
     }
 
     /**
@@ -1649,21 +1864,21 @@ public:
     constexpr void flip_in_range(const uint64_t& begin, const uint64_t& end) noexcept
     {
         uint64_t to_add = 1;
-        if (begin % m_chunk_size)
+        if (begin % m_block_size)
         {
-            for (uint16_t i = begin % m_chunk_size; i < m_chunk_size; ++i)
-                m_data[begin / m_chunk_size] ^= T{ 1 } << i;
+            for (uint16_t i = begin % m_block_size; i < m_block_size; ++i)
+                m_data[begin / m_block_size] ^= BlockType{ 1 } << i;
         }
         else
             to_add = 0;
 
-        for (uint64_t i = begin / m_chunk_size + to_add; i < end / m_chunk_size; ++i)
+        for (uint64_t i = begin / m_block_size + to_add; i < end / m_block_size; ++i)
             m_data[i] = ~m_data[i];
 
-        if (end % m_chunk_size)
+        if (end % m_block_size)
         {
-            for (uint16_t i = 0; i < end % m_chunk_size; ++i)
-                m_data[end / m_chunk_size] ^= T{ 1 } << i;
+            for (uint16_t i = 0; i < end % m_block_size; ++i)
+                m_data[end / m_block_size] ^= BlockType{ 1 } << i;
         }
     }
 
@@ -1676,54 +1891,54 @@ public:
     constexpr void flip_in_range(const uint64_t& begin, const uint64_t& end, const uint64_t& step) noexcept
     {
         for (uint64_t i = begin; i < end; i += step)
-            m_data[i] ^= T{ 1 } << i % m_chunk_size;
+            m_data[i] ^= BlockType{ 1 } << i % m_block_size;
     }
 
     /**
-     * Flips the chunk at the specified index
-     * @param index Index of the chunk to flip (chunk index)
+     * Flips the block at the specified index
+     * @param index Index of the block to flip (block index)
      */
-    constexpr void flip_chunk(const uint64_t& index) noexcept
+    constexpr void flip_block(const uint64_t& index) noexcept
     {
         m_data[index] = ~m_data[index];
     }
 
     /**
-     * Flips all the chunks (same as flip())
+     * Flips all the blocks (same as flip())
      */
-    constexpr void flip_chunk() noexcept
+    constexpr void flip_block() noexcept
     {
         flip();
     }
 
     /**
-     * Flips all the chunks in the specified range
-     * @param end End of the range to fill (chunk index)
+     * Flips all the blocks in the specified range
+     * @param end End of the range to fill (block index)
      */
-    constexpr void flip_chunk_in_range(const uint64_t& end) noexcept
+    constexpr void flip_block_in_range(const uint64_t& end) noexcept
     {
         for (uint64_t i = 0; i < end; ++i)
             m_data[i] = ~m_data[i];
     }
 
     /**
-     * Flips all the chunks in the specified range
-     * @param begin Begin of the range to fill (chunk index)
-     * @param end End of the range to fill (chunk index)
+     * Flips all the blocks in the specified range
+     * @param begin Begin of the range to fill (block index)
+     * @param end End of the range to fill (block index)
      */
-    constexpr void flip_chunk_in_range(const uint64_t& begin, const uint64_t& end) noexcept
+    constexpr void flip_block_in_range(const uint64_t& begin, const uint64_t& end) noexcept
     {
         for (uint64_t i = begin; i < end; ++i)
             m_data[i] = ~m_data[i];
     }
 
     /**
-     * Flips all the chunks in the specified range
-     * @param begin Begin of the range to fill (chunk index)
-     * @param end End of the range to fill (chunk index)
-     * @param step Step size between the bits to flip (chunk step)
+     * Flips all the blocks in the specified range
+     * @param begin Begin of the range to fill (block index)
+     * @param end End of the range to fill (block index)
+     * @param step Step size between the bits to flip (block step)
      */
-    constexpr void flip_chunk_in_range(const uint64_t& begin, const uint64_t& end, const uint64_t& step) noexcept
+    constexpr void flip_block_in_range(const uint64_t& begin, const uint64_t& end, const uint64_t& step) noexcept
     {
         for (uint64_t i = begin; i < end; i += step)
             m_data[i] = ~m_data[i];
@@ -1734,27 +1949,27 @@ public:
      * @param index The index of the bit to read (bit index)
      * @return The value of the bit at the specified index
      */
-    [[nodiscard]] constexpr bool get(const uint64_t& index) const noexcept
+    [[nodiscard]] constexpr bool test(const uint64_t& index) const noexcept
     {
-        return m_data[index / m_chunk_size] & T{ 1 } << index % m_chunk_size;
+        return m_data[index / m_block_size] & BlockType{ 1 } << (m_block_size - index % m_block_size);
     }
 
     /**
-     * Retrieves the chunk at the specified index
-     * @param index Index of the chunk to retrieve (chunk index)
+     * Retrieves the block at the specified index
+     * @param index Index of the block to retrieve (block index)
      * @return Chunk at the specified index
      */
-    [[nodiscard]] constexpr const T& get_chunk(const uint64_t& index) const noexcept
+    [[nodiscard]] constexpr const BlockType& get_block(const uint64_t& index) const noexcept
     {
         return m_data[index];
     }
 
     /**
-     * Retrieves the chunk at the specified index
-     * @param index Index of the chunk to retrieve (chunk index)
+     * Retrieves the block at the specified index
+     * @param index Index of the block to retrieve (block index)
      * @return Chunk at the specified index
      */
-    [[nodiscard]] constexpr T& get_chunk(const uint64_t& index) noexcept
+    [[nodiscard]] constexpr BlockType& get_block(const uint64_t& index) noexcept
     {
         return m_data[index];
     }
@@ -1766,17 +1981,17 @@ public:
      */
     [[nodiscard]] constexpr bool all() const noexcept
     {
-        // check all except the last one if the size is not divisible by m_chunk_size
-        for (uint64_t i = 0; i < m_storage_size - (m_size % m_chunk_size ? 1 : 0); ++i)
+        // check all except the last one if the size is not divisible by m_block_size
+        for (uint64_t i = 0; i < m_storage_size - (m_size % m_block_size ? 1 : 0); ++i)
         {
-	        if (m_data[i] != (std::numeric_limits<T>::max)())
+	        if (m_data[i] != (std::numeric_limits<BlockType>::max)())
 				return false;
 		}
-        if (m_size % m_chunk_size)
+        if (m_size % m_block_size)
         {
-            for (uint16_t i = 0; i < m_size % m_chunk_size; ++i)
+            for (uint16_t i = 0; i < m_size % m_block_size; ++i)
             {
-                if (!(m_data[m_size / m_chunk_size] & T{ 1 } << i))
+                if (!(m_data[m_size / m_block_size] & BlockType{ 1 } << i))
                     return false;
             }
         }
@@ -1789,16 +2004,16 @@ public:
      */
     [[nodiscard]] constexpr bool any() const noexcept
     {
-		for (uint64_t i = 0; i < m_storage_size - (m_size % m_chunk_size ? 1 : 0); ++i)
+		for (uint64_t i = 0; i < m_storage_size - (m_size % m_block_size ? 1 : 0); ++i)
 		{
 			if (m_data[i])
 				return true;
 		}
-		if (m_size % m_chunk_size)
+		if (m_size % m_block_size)
 		{
-			for (uint16_t i = 0; i < size % m_chunk_size; ++i)
+			for (uint16_t i = 0; i < size % m_block_size; ++i)
 			{
-				if (m_data[m_size / m_chunk_size] & T{ 1 } << i)
+				if (m_data[m_size / m_block_size] & BlockType{ 1 } << i)
 					return true;
 			}
 		}
@@ -1811,16 +2026,16 @@ public:
 	 *	 */
 	[[nodiscard]] constexpr bool none() const noexcept
 	{
-		for (uint64_t i = 0; i < m_storage_size - (m_size % m_chunk_size ? 1 : 0); ++i)
+		for (uint64_t i = 0; i < m_storage_size - (m_size % m_block_size ? 1 : 0); ++i)
 		{
 			if (m_data[i])
 				return false;
 		}
-        if (m_size % m_chunk_size)
+        if (m_size % m_block_size)
         {
-            for (uint16_t i = 0; i < m_size % m_chunk_size; ++i)
+            for (uint16_t i = 0; i < m_size % m_block_size; ++i)
             {
-                if (m_data[m_size / m_chunk_size] & T{ 1 } << i)
+                if (m_data[m_size / m_block_size] & BlockType{ 1 } << i)
                     return true;
             }
         }
@@ -1829,10 +2044,10 @@ public:
 
 
     /**
-     * Checks if all bits are cleared (none are set)
-     * @return true if all bits are cleared, false otherwise
+     * Checks if all bits are reseted (none are set)
+     * @return true if all bits are reseted, false otherwise
      */
-    [[nodiscard]] constexpr bool all_clear() const noexcept
+    [[nodiscard]] constexpr bool all_reset() const noexcept
     {
         return none();
     }
@@ -1843,9 +2058,9 @@ public:
     [[nodiscard]] constexpr uint64_t count() const noexcept
     {
         uint64_t count = 0;
-        for (T* i = m_data; i < m_data + m_storage_size; ++i)
+        for (BlockType* i = m_data; i < m_data + m_storage_size; ++i)
         {
-            T j = *i;
+            BlockType j = *i;
             while (j)
             {
                 j &= j - 1;
@@ -1874,26 +2089,26 @@ public:
 	}
 
     /**
-     * Returns the number of chunks the Bitset would utilize for given size
+     * Returns the number of blocks the Bitset would utilize for given size
      * @param size Size of the target Bitset in bits
-     * @return The number of chunks the Bitset would utilize for the given size
+     * @return The number of blocks the Bitset would utilize for the given size
      */
     [[nodiscard]] inline static constexpr uint64_t calculate_storage_size(const uint64_t& size) noexcept
     {
-        return m_size / (sizeof(T) * 8) + (size % (sizeof(T) * 8) ? 1 : 0);
+        return m_size / (sizeof(BlockType) * 8) + (size % (sizeof(BlockType) * 8) ? 1 : 0);
     }
 
     /**
-     * Creates a chunk of type T based on the given boolean value.
+     * Creates a block of type T based on the given boolean value.
      *
-     * @param value A boolean value indicating whether to create the chunk with the maximum value or zero.
-     * @return The created chunk of type T. If value is true, returns the maximum value representable by type T,
+     * @param value A boolean value indicating whether to create the block with the maximum value or zero.
+     * @return The created block of type T. If value is true, returns the maximum value representable by type T,
      *         otherwise returns zero.
      */
 
-    [[nodiscard]] inline static constexpr T create_filled_chunk(const bool& value)
+    [[nodiscard]] inline static constexpr BlockType create_filled_block(const bool& value)
     {
-        return value ? (std::numeric_limits<T>::max)() : 0u;
+        return value ? (std::numeric_limits<BlockType>::max)() : 0u;
     }
 
     /**
@@ -1902,17 +2117,17 @@ public:
     static constexpr uint64_t m_size = Size;
 
     /**
-     * Size of the Bitset in chunks
+     * Size of the Bitset in blocks
      */
     static constexpr uint64_t m_storage_size = calculate_storage_size(m_size);
 
     /**
      * Bit-length of the underlying type
      */
-    static constexpr uint16_t m_chunk_size = sizeof(T) * 8;
+    static constexpr uint16_t m_block_size = sizeof(BlockType) * 8;
 
     /**
-	 * Underlying array of chunks containing the bits
+	 * Underlying array of blocks containing the bits
 	 */
-    alignas(std::hardware_destructive_interference_size) T m_data[m_storage_size] = { 0 };
+    alignas(std::hardware_destructive_interference_size) BlockType m_data[m_storage_size] = { 0 };
 };
