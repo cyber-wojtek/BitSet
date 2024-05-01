@@ -6442,6 +6442,7 @@ namespace woj
 
         /**
          * Inserts bit value at the specified index
+         * When inserting at the last position, for more info see push_back
          * @param index Index to insert the value at (bit index)
          * @param value Value to insert (bit value)
          */
@@ -6459,7 +6460,16 @@ namespace woj
                 BlockType* new_data = new BlockType[++m_storage_size];
                 if (m_data)
                 {
-                    for (size_t i = index; i < m_size; --i)
+                    // copy everything prepending the bit
+                    for (size_t i = 0; i < index; ++i)
+                    {
+                        if (test(i))
+                            *(new_data + i / m_block_size) |= BlockType{ 1 } << i % m_block_size;
+                        else
+                            *(new_data + i / m_block_size) &= ~(BlockType{ 1 } << i % m_block_size);
+                    }
+                    // copy everything appending the bit
+                    for (size_t i = index; i < m_size; ++i)
                     {
                         if (test(i))
                             *(new_data + (i + 1) / m_block_size) |= BlockType{ 1 } << (i + 1) % m_block_size;
@@ -6474,9 +6484,11 @@ namespace woj
             }
             else
             {
-                for (size_t i = index; i < m_size; --i)
+                const dynamic_bitset tmp_copy(*this);
+                // copy everything appending the bit
+                for (size_t i = index; i < m_size; ++i)
                 {
-                    set(i + 1, test(i));
+                    set(i + 1, tmp_copy.test(i));
                 }
                 set(index, value);
                 ++m_partial_size;
@@ -6527,7 +6539,7 @@ namespace woj
 
         /**
 		 * Inserts block value at the specified index to the bitset.\n
-		 * When inserting at the last position, see the behaviour for push_back_block
+		 * When inserting at the last position, for more info see push_back_block
 		 * @param index Index to insert the value at (block index)
 		 * @param block Block value to insert (block value)
 		 */
@@ -6542,6 +6554,11 @@ namespace woj
             BlockType* new_data = new BlockType[m_storage_size + 1];
             if (m_data)
             {
+                // copy everything prepending the block
+                for (size_t i = 0; i < index; ++i)
+                    *(new_data + i) = *(m_data + i);
+
+                // copy everything appending the block
                 for (size_t i = index; i < m_storage_size; ++i)
                     *(new_data + i + 1) = *(m_data + i);
                 delete[] m_data;
