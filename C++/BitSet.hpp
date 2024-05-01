@@ -194,7 +194,7 @@ namespace woj
              * Bool conversion operator
              * @return Value at current index (bit value)
              */
-            constexpr operator bool() const noexcept
+            [[nodiscard]] constexpr operator bool() const noexcept
             {
                 return m_bitset.test(m_index);
             }
@@ -252,10 +252,9 @@ namespace woj
             /**
              * Flip the bit at the current index
              */
-            constexpr reference& flip() const noexcept
+            constexpr void flip() const noexcept
             {
                 m_bitset.flip(m_index);
-                return *this;
             }
 
             /**
@@ -293,7 +292,7 @@ namespace woj
              * @param bitset The bitset instance to iterate over.
              * @param index Index of the bit to start the iteration from (bit index).
              */
-            constexpr iterator_base(BitSetTypeSpecifier bitset, const size_t& index = 0) noexcept : m_bitset(bitset), m_index(index) {}
+            explicit constexpr iterator_base(BitSetTypeSpecifier bitset, const size_t& index = 0) noexcept : m_bitset(bitset), m_index(index) {}
 
             /**
              * Copy constructor.
@@ -3170,7 +3169,7 @@ namespace woj
              * Bool conversion operator
              * @return Value at current index (bit value)
              */
-            operator bool() const noexcept
+            [[nodiscard]] operator bool() const noexcept
             {
                 return m_bitset.test(m_index);
             }
@@ -3228,7 +3227,7 @@ namespace woj
             /**
              * Flip the bit at the current index
              */
-            reference& flip() const noexcept
+            void flip() const noexcept
             {
                 m_bitset.flip(m_index);
                 return *this;
@@ -3269,7 +3268,7 @@ namespace woj
              * @param bitset The bitset instance to iterate over.
              * @param index Index of the bit to start the iteration from (bit index).
              */
-            iterator_base(BitSetTypeSpecifier bitset, const size_t& index = 0) noexcept : m_bitset(bitset), m_index(index) {}
+            explicit iterator_base(BitSetTypeSpecifier bitset, const size_t& index = 0) noexcept : m_bitset(bitset), m_index(index) {}
 
             /**
              * Copy constructor.
