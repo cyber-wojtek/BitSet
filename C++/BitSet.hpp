@@ -34,7 +34,7 @@ namespace woj
         std::is_same_v<T, char32_t>;
 
     /**
-     * Check if fixed-size container supports read-write bracket operator
+     * Check if fixed-size container supports read-write iterator
      * @tparam T Type of container
      */
     template <typename T>
@@ -45,13 +45,47 @@ namespace woj
     };
 
     /**
-     * Check if container supports read bracket operator
+     * Check if container supports read iterator
      * @tparam T Type of container
      */
     template <typename T>
     concept has_read_iterator = requires (const T a)
     {
         { *a.cbegin() } -> std::same_as<typename T::const_reference>;
+        { *++a.cbegin() } -> std::same_as<typename T::const_reference>;
+    };
+
+    /**
+     * Check if container supports read iterator
+     * @tparam T Type of container
+     */
+    template <typename T>
+    concept dynamic_has_read_write_bracket_operator = requires (T a)
+    {
+        { T(1)[0] } -> std::same_as<typename T::reference>;
+        { T(2)[1] = typename T::value_type{} };
+    };
+
+    /**
+	 * Check if fixed-size container supports read-write bracket operator
+	 * @tparam T Type of container
+	 */
+    template <typename T>
+    concept fixed_has_read_write_bracket_operator = requires (T a)
+    {
+        { a[0] } -> std::same_as<typename T::reference>;
+        { a[a.size() - 1] = typename T::value_type{} };
+    };
+
+    /**
+     * Check if container supports read bracket operator
+     * @tparam T Type of container
+     */
+    template <typename T>
+    concept has_read_bracket_operator = requires (const T a)
+    {
+        { a[0] } -> std::same_as<typename T::const_reference>;
+        { a[a.size() - 1] } -> std::same_as<typename T::const_reference>;
     };
 
     /**
@@ -130,7 +164,7 @@ namespace woj
      * block value: Is BlockType value, used to directly copy bits inside it. e.g. when BlockType=uint8_t, block value may be 0b10101010 \n
      * (Visible order of bits is reversed order of the actual bits, e.g. 0b00001111 = 16, so it's lower 4 bits are set)\n
      * block index: index of BlockType value, e.g. when BlockType=size_t, Size=128, block index is value between (0-1), because 128 bits fit into 2 size_t's
-     * @tparam BlockType Type of block to use for bit storage (may be one of uint8_t, uint16_t, uint32_t, size_t, {unsigned __int128})
+     * @tparam BlockType Type of block to use for bit storage (may be one of uint8_t, uint16_t, uint32_t, size_t, {unsigned _int128})
      * @tparam Size Size of bitset, in bits
      */
     template <unsigned_integer BlockType, std::size_t Size>
@@ -1143,61 +1177,11 @@ namespace woj
         constexpr bitset() noexcept : m_data{ 0 } {}
 
         /**
-		 * Initializer list block constructor
-		 * @param list Initializer list to fill the bitset with, containing block values
-		 */
-        constexpr bitset(const std::initializer_list<BlockType>& list) noexcept
-        {
-            std::copy(list.begin(), list.begin() + (std::min)(list.size(), m_storage_size), m_data);
-        }
-
-        /**
-         * General initializer block list constructor
-         * @tparam OtherBlockType Type of the block to fill the bitset with
-         * @param list Initializer list to fill the bitset with, containing block values
-         */
-        template <unsigned_integer OtherBlockType> requires !std::is_same_v<BlockType, OtherBlockType>
-        constexpr bitset(const std::initializer_list<OtherBlockType> list) noexcept : m_data{ 0 }
-        {
-            typename std::initializer_list<OtherBlockType>::const_iterator it = list.begin();
-
-            if (sizeof(BlockType) > sizeof(OtherBlockType))
-            {
-                constexpr uint16_t diff = sizeof(BlockType) / sizeof(OtherBlockType), other_block_size = sizeof(OtherBlockType) * 8;
-
-                for (size_t i = 0; i < m_storage_size; ++i)
-                {
-                    for (size_t j = 0; j < diff; ++j)
-                    {
-                        if (it == list.end())
-                            return;
-                        m_data[i] |= static_cast<BlockType>(*it++) << j * other_block_size;
-                    }
-                }
-            }
-            else
-            {
-                constexpr uint16_t diff = sizeof(OtherBlockType) / sizeof(BlockType);
-
-                for (size_t i = 0; i < list.size(); ++i)
-                {
-                    for (uint16_t j = 0; j < diff; ++j)
-                    {
-                        if (i * diff + j >= m_storage_size)
-                            return;
-                        m_data[i * diff + j] = *it >> j % diff * m_block_size;
-                    }
-                    ++it;
-                }
-            }
-        }
-
-        /**
          * Bool value constructor
          * @tparam U Used to constrain type to bool. [don't use]
          * @param val Bool value to fill the bitset with (bit value)
          */
-        template <typename U = BlockType> requires !std::is_same_v<bool, std::remove_cvref_t<U>> && !std::is_pointer_v<std::remove_cvref_t<U>> && !std::is_array_v<std::remove_cvref_t<U>>
+        template <typename U = BlockType> requires (!std::is_same_v<bool, std::remove_cvref_t<U>> && !std::is_pointer_v<std::remove_cvref_t<U>> && !std::is_array_v<std::remove_cvref_t<U>>)
         explicit constexpr bitset(const bool& val)
         {
             fill(val);
@@ -1218,16 +1202,7 @@ namespace woj
 		 */
         constexpr bitset(const bitset& other) noexcept
         {
-            std::copy(other.m_data, other.m_data + other.m_storage_size, m_data);
-        }
-
-        /**
-         * Move constructor -> Copy constructor
-         * @param other Other bitset instance to copy from
-         */
-        constexpr bitset(bitset&& other) noexcept
-        {
-            std::copy(other.m_data, other.m_data + other.m_storage_size, m_data);
+            from_other(other);
         }
 
         /**
@@ -1238,349 +1213,139 @@ namespace woj
         template <size_t OtherSize> requires (Size != OtherSize)
         constexpr bitset(const bitset<BlockType, OtherSize>& other) noexcept
         {
-            clear();
-            size_t min_storage_size = (std::min)(m_storage_size, other.m_storage_size);
-            std::copy(other.m_data, other.m_data + min_storage_size, m_data);
+            from_other<OtherSize>(other);
         }
 
         /**
-         * General conversion constructor
-         * @tparam OtherBlockType Type of the block to copy from
-         * @tparam OtherSize Size of the other bitset to copy from
-         * @param other Other bitset instance to copy from
+         * Conversion constructor with different block type and size
+         * @tparam OtherBlockType Type of the block to convert from
+         * @tparam OtherSize Size of the other bitset to convert from
+         * @param other Other bitset instance to convert from
          */
         template <unsigned_integer OtherBlockType, size_t OtherSize> requires (std::convertible_to<OtherBlockType, BlockType> && !std::is_same_v<BlockType, OtherBlockType>)
         constexpr bitset(const bitset<OtherBlockType, OtherSize>& other) noexcept : m_data{ 0 }
         {
-        	if (sizeof(BlockType) > sizeof(OtherBlockType))
-            {
-                constexpr uint16_t diff = sizeof(BlockType) / sizeof(OtherBlockType);
-
-                for (size_t i = 0; i < m_storage_size; ++i)
-                {
-                    for (size_t j = 0; j < diff; ++j)
-                    {
-                        if (i * diff + j >= other.m_storage_size)
-                        {
-	                        return;
-                        }
-                        m_data[i] |= static_cast<BlockType>(other.m_data[i * diff + j]) << j * other.m_block_size;
-                    }
-                }
-            }
-            else
-            {
-                constexpr uint16_t diff = sizeof(OtherBlockType) / sizeof(BlockType);
-
-            	for (size_t i = 0; i < other.m_storage_size; ++i)
-                {
-                    for (uint16_t j = 0; j < diff; ++j)
-                    {
-                        if (i * diff + j >= m_storage_size)
-                        {
-                            return;
-                        }
-	                    m_data[i * diff + j] = other.m_data[i] >> j % diff * m_block_size;
-                    }
-                }
-            }
+            _from_other<OtherBlockType, OtherSize>(other);
         }
 
         /**
-		 * C string stack array conversion constructor
+		 * C string stack array to bitset conversion constructor
 		 * @tparam Elem Type of the character array
 		 * @tparam StrSize Size of the character array
-		 * @param c_str Array c string to fill the bitset with (must be null-terminated)
+		 * @param c_str C string stack array to convert from (must be null-terminated)
 		 * @param set_chr Character that represents set bits
 		 */
         template <char_type Elem, size_t StrSize>
-        constexpr bitset(const Elem (&c_str)[StrSize], const Elem& set_chr = '1') noexcept : m_data{ 0 }
+        constexpr bitset(const Elem(&c_str)[StrSize], const Elem& set_chr = '1') noexcept : m_data{ 0 }
         {
-            for (size_t i = 0; i < m_storage_size; ++i)
-            {
-                for (uint16_t j = 0; j < m_block_size; ++j)
-                {
-                    if (!c_str[i * m_block_size + j])
-                    {
-	                    return;
-                    }
-                    m_data[i] |= c_str[i * m_block_size + j] == set_chr ? BlockType{1} << j : 0;
-                }
-            }
+            _from_c_string<Elem, StrSize>(c_str, set_chr);
         }
 
         /**
-         * C string pointer conversion constructor
+         * C string pointer array to bitset conversion constructor
          * @tparam PtrArr Type of the character array [don't use]
          * @tparam Elem Type of the character array [don't use]
-         * @param c_str Pointer to c string to fill the bitset with (must be null-terminated)
+         * @param c_str Pointer to c string to convert from (must be null-terminated)
          * @param set_chr Character that represents set bits
 		 */
-        template <typename PtrArr = const char*, char_type Elem = std::remove_cvref_t<std::remove_pointer_t<std::remove_cvref_t<PtrArr>>>> requires std::is_pointer_v<PtrArr> && !std::is_array_v<PtrArr>
+        template <typename PtrArr = const char*, char_type Elem = std::remove_cvref_t<std::remove_pointer_t<std::remove_cvref_t<PtrArr>>>> requires (std::is_pointer_v<PtrArr> && !std::is_array_v<PtrArr>)
         bitset(PtrArr c_str, const Elem& set_chr = '1') noexcept : m_data{ 0 }
         {
-            for (size_t i = 0; i < m_storage_size; ++i)
-            {
-                for (uint16_t j = 0; j < m_block_size; ++j)
-                {
-                    if (!*c_str)
-                    {
-	                    return;
-                    }
-					m_data[i] |= *c_str++ == set_chr ? BlockType{1} << j : 0;
-                }
-            }
+            _from_c_string<PtrArr, Elem>(c_str, set_chr);
         }
 
         /**
-		 * String conversion constructor
+		 * String to bitset conversion constructor
 		 * @tparam Elem Type of the character array
-		 * @param str String to fill the bitset with (must be null-terminated), it's size ought to be >= size()
+		 * @param str String to convert from (must be null-terminated)
 		 * @param set_chr Character that represents set bits
 		 */
         template <char_type Elem>
         constexpr bitset(const std::basic_string<Elem>& str, const Elem& set_chr = '1') noexcept : m_data{ 0 }
         {
-            for (size_t i = 0; i < m_storage_size; ++i)
-            {
-                for (uint16_t j = 0; j < m_block_size; ++j)
-                {
-                    if (i * m_block_size + j >= str.size())
-                    {
-	                    return;
-                    }
-                    m_data[i] |= str[i * m_block_size + j] == set_chr ? BlockType{1} << j : 0;
-                }
-            }
+            _from_string<Elem>(str, set_chr);
         }
 
         /**
-		 * Bool array conversion constructor
+		 * Bool array to bitset conversion constructor
+		 * @tparam ArrType Used to constrain type. [don't use]
 		 * @tparam OtherSize Size of the bool array to copy from
-		 * @param arr Bool array containing the values to initialize the bitset with (bit values). It's size must be >= size()
+		 * @param arr Bool array containing bit values to convert from
 		 */
-        template <uint64_t OtherSize>
-        constexpr bitset(const bool(&arr)[OtherSize]) noexcept : m_data{ 0 }
+        template <typename ArrType = bool, uint64_t OtherSize> requires (std::is_same_v<ArrType, bool>)
+        constexpr bitset(const ArrType(&arr)[OtherSize]) noexcept : m_data{ 0 }
         {
-            for (size_t i = 0; i < m_full_storage_size; ++i)
-            {
-                for (uint16_t j = 0; j < m_block_size; ++j)
-                {
-                    if (i * m_block_size + j >= OtherSize)
-                    {
-	                    return;
-                    }
-                    m_data[i] |= arr[i * m_block_size + j] << j;
-                }
-            }
-            if (m_partial_size)
-            {
-                for (uint16_t j = 0; j < m_partial_size; ++j)
-                    m_data[m_storage_size - 1] |= static_cast<BlockType>(arr[m_storage_size - !!m_partial_size * m_block_size + j]) << j;
-            }
+            _from_bool_array<OtherSize>(arr);
         }
 
         /**
-         * Bool pointer array conversion constructor
+         * Bool pointer array to bitset conversion constructor
          * @tparam PtrArr Used to constrain type to const bool* [don't use]
-         * @param ptr Pointer to the bool array containing the values to initialize the bitset with (bit values). It's size must be >= size()
+         * @param ptr Pointer to the bool array containing bit values to convert from. It's size must be >= size()
          */
-        template <typename PtrArr = const bool*> requires std::is_pointer_v<PtrArr> && !std::is_array_v<PtrArr> && std::is_same_v<const bool*, PtrArr> && !std::is_same_v<std::remove_cvref_t<BlockType>, bool*>
+        template <typename PtrArr = const bool*> requires (std::is_pointer_v<PtrArr> && !std::is_array_v<PtrArr>&& std::is_same_v<const bool*, PtrArr> && !std::is_same_v<std::remove_cvref_t<BlockType>, bool*>)
     	bitset(PtrArr ptr) noexcept : m_data{ 0 }
         {
-	        for (size_t i = 0; i < m_full_storage_size; ++i)
-	        {
-		        for (uint16_t j = 0; j < m_block_size; ++j)
-                    m_data[i] |= *ptr++ << j;
-	        }
-            if (m_partial_size)
-            {
-                for (uint16_t j = 0; j < m_partial_size; ++j)
-                    m_data[m_storage_size - 1] |= static_cast<BlockType>(*ptr++) << j;
-            }
+            _from_bool_array<PtrArr>(ptr);
         }
 
         /**
-         * BlockType stack array constructor
+         * Block stack array copy constructor
          * @tparam OtherSize Size of the other bitset to copy from
-         * @param arr Array of BlockType values to initialize the bitset with (block values).
+         * @param arr Array of block values to initialize the bitset with.
          */
-        template <size_t OtherSize>
-        constexpr bitset(const BlockType (&arr)[OtherSize]) noexcept : m_data{ 0 }
+        template <size_t OtherSize> requires (!std::is_same_v<bool, BlockType>)
+        constexpr bitset(const BlockType (&arr)[OtherSize]) noexcept
         {
-            constexpr size_t min_storage_size = (std::min)(m_storage_size, OtherSize);
-            for (size_t i = 0; i < min_storage_size; ++i)
-                m_data[i] = arr[i];
+            from_block_array<OtherSize>(arr);
         }
 
         /**
-		 * BlockType pointer array constructor
+		 * Block pointer array copy constructor
 		 * @tparam PtrArr Type of the pointer array [don't use]
 		 * @param ptr Pointer to array of BlockType values to initialize the bitset with (block values). It's size must be >= storage_size()
 		 */
-        template <typename PtrArr = const BlockType*> requires std::is_pointer_v<PtrArr> && !std::is_array_v<PtrArr> && std::is_same_v<BlockType, std::remove_cvref_t<std::remove_pointer_t<std::remove_cvref_t<PtrArr>>>> && !std::is_same_v<bool, std::remove_cvref_t<std::remove_pointer_t<std::remove_cvref_t<PtrArr>>>>
-        bitset(PtrArr ptr) noexcept : m_data{ 0 }
+        template <typename PtrArr = const BlockType*> requires (std::is_pointer_v<PtrArr> && !std::is_array_v<PtrArr>&& std::is_same_v<BlockType, std::remove_cvref_t<std::remove_pointer_t<std::remove_cvref_t<PtrArr>>>> && !std::is_same_v<bool, std::remove_cvref_t<std::remove_pointer_t<std::remove_cvref_t<PtrArr>>>>)
+        bitset(PtrArr ptr) noexcept
         {
-            for (size_t i = 0; i < m_storage_size; ++i)
-                m_data[i] = *ptr++;
+            from_block_array<PtrArr>(ptr);
         }
 
         /**
-		 * General stack array conversion constructor
-		 * @tparam OtherBlockType Type of the block to copy from
-		 * @tparam OtherSize Size of the other bitset to copy from
-		 * @param arr Array of values to initialize bitset with.
+		 * Block stack array conversion constructor with different block type and size
+		 * @tparam OtherBlockType Type of the block to convert from
+		 * @tparam OtherSize Size of the other bitset to convert from
+		 * @param arr Array of OtherBlockType values to convert from.
 		 */
         template <unsigned_integer OtherBlockType, size_t OtherSize> requires (std::convertible_to<OtherBlockType, BlockType> && !std::is_same_v<BlockType, OtherBlockType>)
     	constexpr bitset(const OtherBlockType (&arr)[OtherSize]) noexcept : m_data{ 0 }
         {
-            if (sizeof(BlockType) > sizeof(OtherBlockType))
-            {
-                constexpr uint16_t diff = sizeof(BlockType) / sizeof(OtherBlockType), other_block_size = sizeof(OtherBlockType) * 8;
-
-                for (size_t i = 0; i < m_storage_size; ++i)
-                {
-                    for (size_t j = 0; j < diff; ++j)
-                    {
-                        if (i * diff + j > OtherSize)
-                        {
-	                        return;
-                        }
-	                    m_data[i] |= static_cast<BlockType>(arr[i * diff + j]) << j * other_block_size;
-                    }
-                }
-            }
-            else
-            {
-                constexpr uint16_t diff = sizeof(OtherBlockType) / sizeof(BlockType);
-
-                for (size_t i = 0; i < OtherSize; ++i)
-                {
-                    for (uint16_t j = 0; j < diff; ++j)
-                    {
-                        if (i * diff + j > m_storage_size)
-                        {
-                            return;
-                        }
-	                    m_data[i * diff + j] = arr[i] >> j % diff * m_block_size;
-                    }
-                }
-            }
+            _from_block_array<OtherBlockType, OtherSize>(arr);
         }
 
         /**
-		 * General pointer array conversion constructor
+		 * Block stack pointer array conversion constructor with different block type and size
 		 * @tparam PtrArr Type of the block pointer array [don't use]
 		 * @tparam Elem Type of elem in the block pointer array [don't use]
-		 * @param ptr Pointer to array of BlockType values to initialize the bitset with (block values). It's size must be >= storage_size()
+		 * @param ptr Pointer to array of block values to copy from. It's size must be >= storage_size()
 		 */
-        template <typename PtrArr, unsigned_integer Elem = std::remove_cvref_t<std::remove_pointer_t<std::remove_cvref_t<PtrArr>>>> requires std::convertible_to<Elem, BlockType> && std::convertible_to<BlockType, Elem> && !std::is_same_v<BlockType, Elem> && std::is_pointer_v<PtrArr> && !std::is_array_v<PtrArr> && !std::is_same_v<bool, Elem>
+        template <typename PtrArr, unsigned_integer Elem = std::remove_cvref_t<std::remove_pointer_t<std::remove_cvref_t<PtrArr>>>> requires (std::convertible_to<Elem, BlockType>&& std::convertible_to<BlockType, Elem> && !std::is_same_v<BlockType, Elem>&& std::is_pointer_v<PtrArr> && !std::is_array_v<PtrArr> && !std::is_same_v<bool, Elem>)
         bitset(PtrArr const& ptr) noexcept : m_data{ 0 }
         {
-            if (sizeof(BlockType) > sizeof(Elem))
-            {
-                constexpr uint16_t diff = sizeof(BlockType) / sizeof(Elem), other_block_size = sizeof(Elem) * 8;
-
-                for (size_t i = 0; i < m_storage_size; ++i)
-                {
-                    for (size_t j = 0; j < diff; ++j)
-                        m_data[i] |= static_cast<BlockType>(*(ptr + i * diff + j)) << j * other_block_size;
-                }
-            }
-            else
-            {
-                constexpr uint16_t diff = sizeof(Elem) / sizeof(BlockType);
-
-                for (size_t i = 0; i < m_storage_size; ++i)
-                {
-                    for (uint16_t j = 0; j < diff; ++j)
-                        m_data[i * diff + j] = *(ptr + i) >> j % diff * m_block_size;
-                }
-            }
+            _from_block_array<PtrArr, Elem>(ptr);
         }
 
         /**
-         * Block container conversion constructor
-         * @tparam T Type of the container to convert from [must have fixed size equal to Size, value_type equal to BlockType, support const_iterator]
-         * @param cont Container containing block values
+         * Block container copy constructor
+         * @tparam T Type of the container to copy from [must have fixed size equal to Size, value_type equal to BlockType, support const_iterator, support .size()]
+         * @param cont Container containing block values to copy from
          */
-        template <has_read_iterator T> requires std::is_same_v<BlockType, typename T::value_type>
-        constexpr bitset(const T& cont) noexcept : m_data{ 0 }
+        template <has_read_iterator T> requires (std::is_same_v<BlockType, typename T::value_type>)
+        constexpr bitset(const T& cont) noexcept
         {
-            typename T::const_iterator it = cont.cbegin();
-
-            constexpr size_t min_storage_size = (std::min)(m_storage_size, std::size(cont));
-            for (size_t i = 0; i < min_storage_size; ++i)
-                m_data[i] = *it++;
+            from_block_container<T>(cont);
         }
 
-        /**
-         * General block container to bitset conversion function
-         * @tparam T Type of the container to convert from [value_type must be an unsigned integer, support const_iterator]
-         * @param cont Container containing block values to convert from
-         */
-        template <has_read_iterator T> requires !std::is_same_v<BlockType, typename T::value_type> && unsigned_integer<typename T::value_type> && !std::is_same_v<bool, typename T::value_type>
-        constexpr bitset(const T& cont) noexcept : m_data{ 0 }
-        {
-            typename T::const_iterator it = cont.cbegin();
-
-            if (sizeof(BlockType) > sizeof(T::value_type))
-            {
-                constexpr uint16_t diff = sizeof(BlockType) / sizeof(T::value_type), other_block_size = sizeof(T::value_type) * 8;
-
-                for (size_t i = 0; i < m_storage_size; ++i)
-                {
-                    for (size_t j = 0; j < diff; ++j)
-                    {
-                        if (it == cont.cend())
-                        {
-	                        return;
-                        }
-	                    m_data[i] |= static_cast<BlockType>(*it++) << j * other_block_size;
-                    }
-                }
-            }
-            else
-            {
-                constexpr uint16_t diff = sizeof(T::value_type) / sizeof(BlockType);
-
-                for (size_t i = 0; i < cont.size(); ++i)
-                {
-                    for (uint16_t j = 0; j < diff; ++j)
-                    {
-                        if (i * diff + j >= m_storage_size)
-                        {
-	                        return;
-                        }
-	                    m_data[i * diff + j] = *it >> j % diff * m_block_size;
-                    }
-                    ++it;
-                }
-            }
-        }
-
-        /**
-		 * Bool container to bitset conversion function
-		 * @tparam T Type of the container to convert from [value_type equal to bool, support const_iterator]
-		 * @param cont Container containing bool values to convert from
-		 */
-        template <has_read_iterator T> requires std::is_same_v<bool, typename T::value_type>
-        constexpr bitset(const T& cont) noexcept : m_data{ 0 }
-        {
-            typename T::const_iterator it = cont.cbegin();
-
-            for (size_t i = 0; i < m_storage_size; ++i)
-            {
-                for (size_t j = 0; j < m_block_size; ++j)
-                {
-                    if (it == cont.cend())
-                    {
-                        return;
-                    }
-                    m_data[i] |= static_cast<BlockType>(*it++) << j;
-                }
-            }
-        }
 
         /**
          * Destructor
@@ -1607,87 +1372,161 @@ namespace woj
             return reference(*this, index);
         }
 
+        // assignment operator
+
         /**
-         * General copy assignment operator
-         * @tparam OtherBlockType Type of the block to copy from
+         * Copy assignment operator
+         * @param other Other bitset instance to copy from
+         */
+        constexpr bitset& operator=(const bitset& other) noexcept
+        {
+            from_other(other);
+            return *this;
+        }
+
+        /**
+         * Copy assignment operator with different size
          * @tparam OtherSize Size of the other bitset to copy from
          * @param other Other bitset instance to copy from
+         */
+        template <size_t OtherSize> requires (Size != OtherSize)
+        constexpr bitset& operator=(const bitset<BlockType, OtherSize>& other) noexcept
+        {
+            from_other<OtherSize>(other);
+            return *this;
+        }
+
+        /**
+         * Conversion assignment operator with different block type and size
+         * @tparam OtherBlockType Type of the block to convert from
+         * @tparam OtherSize Size of the other bitset to convert from
+         * @param other Other bitset instance to convert from
          */
         template <unsigned_integer OtherBlockType, size_t OtherSize> requires (std::convertible_to<OtherBlockType, BlockType> && !std::is_same_v<BlockType, OtherBlockType>)
         constexpr bitset& operator=(const bitset<OtherBlockType, OtherSize>& other) noexcept
         {
-            if (std::is_constant_evaluated())
-            {
-                for (BlockType& block : m_data)
-                    block = 0;
-            }
-            else
-                ::memset(m_data, 0, m_storage_size * sizeof(BlockType));
-
-            if (sizeof(BlockType) > sizeof(OtherBlockType))
-            {
-                uint16_t diff = sizeof(BlockType) / sizeof(OtherBlockType);
-
-                for (size_t i = 0; i < m_storage_size; ++i)
-                {
-                    for (uint16_t j = 0; j < diff; ++j)
-                        m_data[i] |= static_cast<BlockType>(other.m_data[i * diff + j]) << j * other.m_block_size;
-                }
-            }
-            else
-            {
-                uint16_t diff = sizeof(OtherBlockType) / sizeof(BlockType);
-
-            	for (size_t i = 0; i < m_storage_size; ++i)
-                {
-                    for (uint16_t j = 0; j < diff; ++j)
-                        m_data[i * diff + j] = other.m_data[i] >> j % diff * m_block_size;
-                }
-            }
-
+            clear();
+            _from_other<OtherBlockType, OtherSize>(other);
             return *this;
         }
 
         /**
-		 * Copy assignment operator with different size
-		 * @tparam OtherSize Size of the other bitset to copy from
-		 * @param other Other bitset instance to copy from
-		 */
-        template <size_t OtherSize> requires (Size != OtherSize)
-        constexpr bitset& operator=(const bitset<BlockType, OtherSize>& other) noexcept
-        {
-            if (std::is_constant_evaluated())
-            {
-                for (BlockType& block : m_data)
-                    block = 0;
-            }
-            else
-                ::memset(m_data, 0, m_storage_size * sizeof(BlockType));
-
-            std::copy(other.m_data, other.m_data + (std::min)(m_storage_size, other.m_storage_size), m_data);
-            return *this;
-        }
-
-        /**
-		 * Copy assignment operator
-		 * @param other Other bitset instance to copy from
-		 */
-        constexpr bitset& operator=(const bitset& other) noexcept
-        {
-            if (this != &other)
-                std::copy(other.m_data, other.m_data + other.m_storage_size, m_data);
-
-            return *this;
-        }
-
-        /**
-         * Move assignment operator -> copy assignment operator
-         * @param other Other bitset instance to copy from
+         * C string stack array to bitset conversion assignment operator
+         * @tparam Elem Type of the character array
+         * @tparam StrSize Size of the character array
+         * @param c_str C string stack array to convert from (must be null-terminated)
          */
-        constexpr bitset& operator=(bitset&& other) noexcept
+        template <char_type Elem, size_t StrSize>
+        constexpr bitset& operator=(const Elem(&c_str)[StrSize]) noexcept
         {
-            std::copy(other.m_data, other.m_data + other.m_storage_size, m_data);
+            clear();
+            _from_c_string<Elem, StrSize>(c_str, '1');
+            return *this;
+        }
 
+        /**
+         * C string pointer array to bitset conversion assignment operator
+         * @tparam PtrArr Type of the character array [don't use]
+         * @tparam Elem Type of the character array [don't use]
+         * @param c_str Pointer to c string to convert from (must be null-terminated)
+         */
+        template <typename PtrArr = const char*, char_type Elem = std::remove_cvref_t<std::remove_pointer_t<std::remove_cvref_t<PtrArr>>>> requires (std::is_pointer_v<PtrArr> && !std::is_array_v<PtrArr>)
+        bitset& operator=(PtrArr c_str) noexcept
+        {
+            clear();
+            _from_c_string<PtrArr, Elem>(c_str, '1');
+            return *this;
+        }
+
+        /**
+         * String to bitset conversion assignment operator
+         * @tparam Elem Type of the character array
+         * @param str String to convert from (must be null-terminated)
+         */
+        template <char_type Elem>
+        constexpr bitset& operator=(const std::basic_string<Elem>& str) noexcept
+        {
+            clear();
+            _from_string<Elem>(str, '1');
+            return *this;
+        }
+
+        /**
+         * Bool array to bitset conversion assignment operator
+         * @tparam OtherSize Size of the bool array to copy from
+         * @tparam ArrType Must always be bool. To constrain types. [don't use]
+         * @param arr Bool array containing the values to convert from (bit values)
+         */
+        template <typename ArrType = bool, uint64_t OtherSize> requires (std::is_same_v<bool, ArrType>)
+        constexpr bitset& operator=(const ArrType(&arr)[OtherSize]) noexcept
+        {
+            clear();
+            _from_bool_array<OtherSize>(arr);
+            return *this;
+        }
+
+        /**
+         * Bool pointer array to bitset conversion assignment operator
+         * @tparam PtrArr Used to constrain type to const bool* [don't use]
+         * @param ptr Pointer to the bool array containing the values to convert from (bit values). It's size must be >= size()
+         */
+        template <typename PtrArr = const bool*> requires (std::is_pointer_v<PtrArr> && !std::is_array_v<PtrArr> && std::is_same_v<const bool*, PtrArr> && !std::is_same_v<std::remove_cvref_t<BlockType>, bool*>)
+        bitset& operator=(PtrArr ptr) noexcept
+        {
+            clear();
+            _from_bool_array<PtrArr>(ptr);
+            return *this;
+        }
+
+        /**
+         * Block stack array copy assignment operator
+         * @tparam OtherSize Size of the other bitset to copy from
+         * @param arr Array of BlockType values to copy from (block values).
+         */
+        template <size_t OtherSize>
+        constexpr bitset& operator=(const BlockType(&arr)[OtherSize]) noexcept
+        {
+            from_block_array<OtherSize>(arr);
+            return *this;
+        }
+
+        /**
+         * Block pointer array copy assignment operator
+         * @tparam PtrArr Type of the pointer array [don't use]
+         * @param ptr Pointer to array of BlockType values to initialize the bitset with (block values). It's size must be >= storage_size()
+         */
+        template <typename PtrArr = const BlockType*> requires std::is_pointer_v<PtrArr> && (!std::is_array_v<PtrArr>&& std::is_same_v<BlockType, std::remove_cvref_t<std::remove_pointer_t<std::remove_cvref_t<PtrArr>>>> && !std::is_same_v<bool, std::remove_cvref_t<std::remove_pointer_t<std::remove_cvref_t<PtrArr>>>>)
+        bitset& operator=(PtrArr ptr) noexcept
+        {
+            from_block_array<PtrArr>(ptr);
+            return *this;
+        }
+
+        /**
+         * Block stack array conversion assignment operator with different block type and size
+         * @tparam OtherBlockType Type of the block to convert from
+         * @tparam OtherSize Size of the other bitset to convert from
+         * @param arr Array of OtherBlockType values to convert from.
+         */
+        template <unsigned_integer OtherBlockType, size_t OtherSize> requires (std::convertible_to<OtherBlockType, BlockType> && !std::is_same_v<BlockType, OtherBlockType>)
+        constexpr bitset& operator=(const OtherBlockType(&arr)[OtherSize]) noexcept
+        {
+            clear();
+            _from_block_array<OtherBlockType, OtherSize>(arr);
+            return *this;
+        }
+
+        /**
+         * Block stack pointer array conversion assignment operator with different block type and size
+         * @tparam PtrArr Type of the block pointer array [don't use]
+         * @tparam Elem Type of elem in the block pointer array [don't use]
+         * @param ptr Pointer to array of block values to convert from. It's size must be >= storage_size()
+         */
+        template <typename PtrArr, unsigned_integer Elem = std::remove_cvref_t<std::remove_pointer_t<std::remove_cvref_t<PtrArr>>>> requires (std::convertible_to<Elem, BlockType>&& std::convertible_to<BlockType, Elem> && !std::is_same_v<BlockType, Elem>&& std::is_pointer_v<PtrArr> && !std::is_array_v<PtrArr> && !std::is_same_v<bool, Elem>)
+        bitset& operator=(PtrArr const& ptr) noexcept
+        {
+            clear();
+            _from_block_array<PtrArr, Elem>(ptr);
             return *this;
         }
 
@@ -1705,7 +1544,7 @@ namespace woj
         {
 	        return false;
 		}
-
+        
         /**
          * Equality operator
          * @param other Other bitset instance to compare with
@@ -1859,6 +1698,7 @@ namespace woj
                 for (size_t i = 0; i < m_storage_size; ++i)
                     result.m_data[i] = m_data[i] >> shift;
             }
+
             return result;
         }
 
@@ -1938,16 +1778,134 @@ namespace woj
         // Conversion functions/operators
 
         /**
-         * bitset to string conversion function
-         * @tparam Elem Type of character in the array
-         * @param set_chr Character to represent set bits
-         * @param rst_chr Character to represent clear bits
-         * @return String representation of the bitset
+         * Copy function
+         * @param other Other bitset instance to copy from
          */
+        constexpr void from_other(const bitset& other) noexcept
+        {
+            if (this != &other)
+				std::copy(other.m_data, other.m_data + other.m_storage_size, m_data);
+        }
+
+        /**
+		 * Copy function with different size
+		 * @tparam OtherSize Size of the other bitset to copy from
+		 * @param other Other bitset instance to copy from
+		 */
+        template <size_t OtherSize> requires (Size != OtherSize)
+        constexpr void from_other(const bitset<BlockType, OtherSize>& other) noexcept
+        {
+            size_t min_storage_size = (std::min)(m_storage_size, other.m_storage_size);
+            std::copy(other.m_data, other.m_data + min_storage_size, m_data);
+            for (size_t i = min_storage_size; i < m_storage_size; ++i)
+                m_data[i] = 0;
+        }
+
+    private:
+
+        /**
+		 * Conversion function with different block type and size
+		 * @tparam OtherBlockType Type of the block to convert from
+		 * @tparam OtherSize Size of the other bitset to convert from
+		 * @param other Other bitset instance to convert from
+		 */
+        template <unsigned_integer OtherBlockType, size_t OtherSize> requires (std::convertible_to<OtherBlockType, BlockType> && !std::is_same_v<BlockType, OtherBlockType>)
+        constexpr void _from_other(const bitset<OtherBlockType, OtherSize>& other) noexcept
+        {
+            if (sizeof(BlockType) > sizeof(OtherBlockType))
+            {
+                constexpr uint16_t diff = sizeof(BlockType) / sizeof(OtherBlockType);
+
+                for (size_t i = 0; i < m_storage_size; ++i)
+                {
+                    for (size_t j = 0; j < diff; ++j)
+                    {
+                        if (i * diff + j >= other.m_storage_size)
+                        {
+                            return;
+                        }
+                        m_data[i] |= static_cast<BlockType>(other.m_data[i * diff + j]) << j * other.m_block_size;
+                    }
+                }
+            }
+            else
+            {
+                constexpr uint16_t diff = sizeof(OtherBlockType) / sizeof(BlockType);
+
+                for (size_t i = 0; i < other.m_storage_size; ++i)
+                {
+                    for (uint16_t j = 0; j < diff; ++j)
+                    {
+                        if (i * diff + j >= m_storage_size)
+                        {
+                            return;
+                        }
+                        m_data[i * diff + j] = other.m_data[i] >> j % diff * m_block_size;
+                    }
+                }
+            }
+        }
+
+        /**
+		 * String to bitset conversion function
+		 * @tparam Elem Type of the character array
+		 * @param str String to convert from (must be null-terminated)
+		 * @param set_chr Character that represents set bits
+		 */
+        template <char_type Elem>
+        constexpr void _from_string(const std::basic_string<Elem>& str, const Elem& set_chr = '1') noexcept
+        {
+            for (size_t i = 0; i < m_storage_size; ++i)
+            {
+                for (uint16_t j = 0; j < m_block_size; ++j)
+                {
+                    if (i * m_block_size + j >= str.size())
+                    {
+                        return;
+                    }
+                    m_data[i] |= str[i * m_block_size + j] == set_chr ? BlockType{ 1 } << j : 0;
+                }
+            }
+        }
+
+    public:
+
+        /**
+		 * Conversion function with different block type and size
+		 * @tparam OtherBlockType Type of the block to convert from
+		 * @tparam OtherSize Size of the other bitset to convert from
+		 * @param other Other bitset instance to convert from
+		 */
+        template <unsigned_integer OtherBlockType, size_t OtherSize> requires (std::convertible_to<OtherBlockType, BlockType> && !std::is_same_v<BlockType, OtherBlockType>)
+        constexpr void from_other(const bitset<OtherBlockType, OtherSize>& other) noexcept
+        {
+            clear();
+            _from_other<OtherBlockType, OtherSize>(other);
+        }
+
+        /**
+         * String to bitset conversion function
+         * @tparam Elem Type of the character array
+         * @param str String to convert from (must be null-terminated)
+         * @param set_chr Character that represents set bits
+         */
+        template <char_type Elem>
+        constexpr void from_string(const std::basic_string<Elem>& str, const Elem& set_chr = '1') noexcept
+        {
+            clear();
+            _from_string(str, set_chr);
+        }
+
+        /**
+		 * bitset to string conversion function
+		 * @tparam Elem Type of character in the array
+		 * @param set_chr Character to represent set bits
+		 * @param rst_chr Character to represent clear bits
+		 * @return String representation of the bitset
+		 */
         template <char_type Elem = char>
         [[nodiscard]] constexpr std::basic_string<Elem> to_string(const Elem& set_chr = '1', const Elem& rst_chr = '0') const /* can't use noexcept - std::basic_string */
         {
-
             std::basic_string<Elem> result(Size + 1, 0);
 
             for (size_t i = 0; i < m_storage_size - !!m_partial_size; ++i)
@@ -1961,6 +1919,226 @@ namespace woj
                     result[(m_storage_size - 1) * m_block_size + i] = m_data[i] & BlockType{ 1 } << i ? set_chr : rst_chr;
             }
             return result;
+        }
+
+        /**
+		 * Block stack array copy function
+		 * @tparam OtherSize Size of the other bitset to copy from
+		 * @param arr Array of BlockType values to initialize the bitset with (block values).
+		 */
+        template <size_t OtherSize>
+        constexpr void from_block_array(const BlockType(&arr)[OtherSize]) noexcept
+        {
+            constexpr size_t min_storage_size = (std::min)(m_storage_size, OtherSize);
+            for (size_t i = 0; i < min_storage_size; ++i)
+                m_data[i] = arr[i];
+            for (size_t i = min_storage_size; i < m_storage_size; ++i)
+                m_data[i] = 0;
+        }
+
+        /**
+		 * Block pointer array copy function
+		 * @tparam PtrArr Type of the pointer array [don't use]
+		 * @param ptr Pointer to array of BlockType values to initialize the bitset with (block values). It's size must be >= storage_size()
+		 */
+        template <typename PtrArr = const BlockType*> requires (std::is_pointer_v<PtrArr> && !std::is_array_v<PtrArr>&& std::is_same_v<BlockType, std::remove_cvref_t<std::remove_pointer_t<std::remove_cvref_t<PtrArr>>>> && !std::is_same_v<bool, std::remove_cvref_t<std::remove_pointer_t<std::remove_cvref_t<PtrArr>>>>)
+        void from_block_array(PtrArr ptr) noexcept
+        {
+            for (size_t i = 0; i < m_storage_size; ++i)
+                m_data[i] = *ptr++;
+        }
+
+    private:
+
+        /**
+		 * Block stack array conversion constructor with different size and block type
+		 * @tparam OtherBlockType Type of the block to convert from
+		 * @tparam OtherSize Size of the other bitset to convert from
+		 * @param arr Array of OtherBlockType values to convert from.
+		 */
+        template <unsigned_integer OtherBlockType, size_t OtherSize> requires (std::convertible_to<OtherBlockType, BlockType> && !std::is_same_v<BlockType, OtherBlockType>)
+        constexpr void _from_block_array(const OtherBlockType(&arr)[OtherSize]) noexcept
+        {
+            if (sizeof(BlockType) > sizeof(OtherBlockType))
+            {
+                constexpr uint16_t diff = sizeof(BlockType) / sizeof(OtherBlockType), other_block_size = sizeof(OtherBlockType) * 8;
+
+                for (size_t i = 0; i < m_storage_size; ++i)
+                {
+                    for (size_t j = 0; j < diff; ++j)
+                    {
+                        if (i * diff + j > OtherSize)
+                        {
+                            return;
+                        }
+                        m_data[i] |= static_cast<BlockType>(arr[i * diff + j]) << j * other_block_size;
+                    }
+                }
+            }
+            else
+            {
+                constexpr uint16_t diff = sizeof(OtherBlockType) / sizeof(BlockType);
+
+                for (size_t i = 0; i < OtherSize; ++i)
+                {
+                    for (uint16_t j = 0; j < diff; ++j)
+                    {
+                        if (i * diff + j > m_storage_size)
+                        {
+                            return;
+                        }
+                        m_data[i * diff + j] = arr[i] >> j % diff * m_block_size;
+                    }
+                }
+            }
+        }
+
+        /**
+		 * Block stack pointer array conversion function with different block type and size
+		 * @tparam PtrArr Type of the block pointer array [don't use]
+		 * @tparam Elem Type of elem in the block pointer array [don't use]
+		 * @param ptr Pointer to array of BlockType values to initialize the bitset with (block values). It's size must be >= storage_size()
+		 */
+        template <typename PtrArr, unsigned_integer Elem = std::remove_cvref_t<std::remove_pointer_t<std::remove_cvref_t<PtrArr>>>> requires (std::convertible_to<Elem, BlockType>&& std::convertible_to<BlockType, Elem> && !std::is_same_v<BlockType, Elem>&& std::is_pointer_v<PtrArr> && !std::is_array_v<PtrArr> && !std::is_same_v<bool, Elem>)
+        void _from_block_array(PtrArr const& ptr) noexcept
+        {
+            if (sizeof(BlockType) > sizeof(Elem))
+            {
+                constexpr uint16_t diff = sizeof(BlockType) / sizeof(Elem), other_block_size = sizeof(Elem) * 8;
+
+                for (size_t i = 0; i < m_storage_size; ++i)
+                {
+                    for (size_t j = 0; j < diff; ++j)
+                        m_data[i] |= static_cast<BlockType>(*(ptr + i * diff + j)) << j * other_block_size;
+                }
+            }
+            else
+            {
+                constexpr uint16_t diff = sizeof(Elem) / sizeof(BlockType);
+
+                for (size_t i = 0; i < m_storage_size; ++i)
+                {
+                    for (uint16_t j = 0; j < diff; ++j)
+                        m_data[i * diff + j] = *(ptr + i) >> j % diff * m_block_size;
+                }
+            }
+        }
+
+    public:
+
+        /**
+		 * Block stack array conversion constructor with different size and block type
+		 * @tparam OtherBlockType Type of the block to convert from
+		 * @tparam OtherSize Size of the other bitset to convert from
+		 * @param arr Array of OtherBlockType values to convert from.
+		 */
+        template <unsigned_integer OtherBlockType, size_t OtherSize> requires (std::convertible_to<OtherBlockType, BlockType> && !std::is_same_v<BlockType, OtherBlockType>)
+        constexpr void from_block_array(const OtherBlockType(&arr)[OtherSize]) noexcept
+        {
+            clear();
+            _from_block_array<OtherBlockType, OtherSize>(arr);
+        }
+
+        /**
+         * Block stack pointer array conversion function with different block type and size
+         * @tparam PtrArr Type of the block pointer array [don't use]
+         * @tparam Elem Type of elem in the block pointer array [don't use]
+         * @param ptr Pointer to array of BlockType values to initialize the bitset with (block values). It's size must be >= storage_size()
+         */
+        template <typename PtrArr, unsigned_integer Elem = std::remove_cvref_t<std::remove_pointer_t<std::remove_cvref_t<PtrArr>>>> requires (std::convertible_to<Elem, BlockType>&& std::convertible_to<BlockType, Elem> && !std::is_same_v<BlockType, Elem>&& std::is_pointer_v<PtrArr> && !std::is_array_v<PtrArr> && !std::is_same_v<bool, Elem>)
+        void from_block_array(PtrArr const& ptr) noexcept
+        {
+            clear();
+            _from_block_array<PtrArr, Elem>(ptr);
+        }
+
+        /**
+		 * bitset to block array conversion function [or basically copy m_data]
+		 * @return Array of block values (size of the array == storage_size())
+		 */
+        [[nodiscard]] BlockType* to_block_array() const noexcept
+        {
+            BlockType result = new BlockType[m_storage_size];
+            std::copy(m_data, m_data + m_storage_size, result);
+            return result;
+        }
+
+    private:
+
+        /**
+		 * C string stack array to bitset conversion function
+		 * @tparam Elem Type of the character array
+		 * @tparam StrSize Size of the character array
+		 * @param c_str Array c string to fill the bitset with (must be null-terminated)
+		 * @param set_chr Character that represents set bits
+		 */
+        template <char_type Elem, size_t StrSize>
+        constexpr void _from_c_string(const Elem(&c_str)[StrSize], const Elem& set_chr = '1') noexcept
+        {
+            for (size_t i = 0; i < m_storage_size; ++i)
+            {
+                for (uint16_t j = 0; j < m_block_size; ++j)
+                {
+                    if (!c_str[i * m_block_size + j])
+                    {
+                        return;
+                    }
+                    m_data[i] |= c_str[i * m_block_size + j] == set_chr ? BlockType{ 1 } << j : 0;
+                }
+            }
+        }
+
+        /**
+         * C string pointer array to bitset conversion function
+         * @tparam PtrArr Type of the character array [don't use]
+         * @tparam Elem Type of the character array [don't use]
+         * @param c_str Pointer to c string to fill the bitset with (must be null-terminated)
+         * @param set_chr Character that represents set bits
+         */
+        template <typename PtrArr = const char*, char_type Elem = std::remove_cvref_t<std::remove_pointer_t<std::remove_cvref_t<PtrArr>>>> requires (std::is_pointer_v<PtrArr> && !std::is_array_v<PtrArr>)
+        void _from_c_string(PtrArr c_str, const Elem& set_chr = '1') noexcept
+        {
+            for (size_t i = 0; i < m_storage_size; ++i)
+            {
+                for (uint16_t j = 0; j < m_block_size; ++j)
+                {
+                    if (!*c_str)
+                    {
+                        return;
+                    }
+                    m_data[i] |= *c_str++ == set_chr ? BlockType{ 1 } << j : 0;
+                }
+            }
+        }
+
+    public:
+
+        /**
+		 * C string stack array to bitset conversion function
+		 * @tparam Elem Type of the character array
+		 * @tparam StrSize Size of the character array
+		 * @param c_str Array c string to fill the bitset with (must be null-terminated)
+		 * @param set_chr Character that represents set bits
+		 */
+        template <char_type Elem, size_t StrSize>
+        constexpr void from_c_string(const Elem(&c_str)[StrSize], const Elem& set_chr = '1') noexcept
+        {
+            clear();
+            _from_c_string<Elem, StrSize>(c_str, set_chr);
+        }
+
+        /**
+         * C string pointer array to bitset conversion function
+         * @tparam PtrArr Type of the character array [don't use]
+         * @tparam Elem Type of the character array [don't use]
+         * @param c_str Pointer to c string to fill the bitset with (must be null-terminated)
+         * @param set_chr Character that represents set bits
+         */
+        template <typename PtrArr = const char*, char_type Elem = std::remove_cvref_t<std::remove_pointer_t<std::remove_cvref_t<PtrArr>>>> requires (std::is_pointer_v<PtrArr> && !std::is_array_v<PtrArr>)
+        void from_c_string(PtrArr c_str, const Elem& set_chr = '1') noexcept
+        {
+            clear();
+            _from_c_string<PtrArr, Elem>(c_str, set_chr);
         }
 
         /**
@@ -1988,6 +2166,80 @@ namespace woj
             return result;
         }
 
+    private:
+
+        /**
+         * Bool array to bitset conversion function
+         * @tparam OtherSize Size of the bool array to copy from
+         * @param arr Bool array containing the values to convert from (bit values).
+         */
+        template <uint64_t OtherSize>
+        constexpr void _from_bool_array(const bool(&arr)[OtherSize]) noexcept
+        {
+            for (size_t i = 0; i < m_full_storage_size; ++i)
+            {
+                for (uint16_t j = 0; j < m_block_size; ++j)
+                {
+                    if (i * m_block_size + j >= OtherSize)
+                    {
+                        return;
+                    }
+                    m_data[i] |= arr[i * m_block_size + j] << j;
+                }
+            }
+            if (m_partial_size)
+            {
+                for (uint16_t j = 0; j < m_partial_size; ++j)
+                    m_data[m_storage_size - 1] |= static_cast<BlockType>(arr[m_storage_size - !!m_partial_size * m_block_size + j]) << j;
+            }
+        }
+
+        /**
+         * Bool pointer array to bitset conversion function
+         * @tparam PtrArr Used to constrain type to const bool* [don't use]
+         * @param ptr Pointer to the bool array containing the values to initialize the bitset with (bit values). It's size must be >= size()
+         */
+        template <typename PtrArr = const bool*> requires (std::is_pointer_v<PtrArr> && !std::is_array_v<PtrArr>&& std::is_same_v<const bool*, PtrArr> && !std::is_same_v<std::remove_cvref_t<BlockType>, bool*>)
+        void _from_bool_array(PtrArr ptr) noexcept
+        {
+            for (size_t i = 0; i < m_full_storage_size; ++i)
+            {
+                for (uint16_t j = 0; j < m_block_size; ++j)
+                    m_data[i] |= *ptr++ << j;
+            }
+            if (m_partial_size)
+            {
+                for (uint16_t j = 0; j < m_partial_size; ++j)
+                    m_data[m_storage_size - 1] |= static_cast<BlockType>(*ptr++) << j;
+            }
+        }
+
+    public:
+
+        /**
+		 * Bool array to bitset conversion function
+		 * @tparam OtherSize Size of the bool array to copy from
+		 * @param arr Bool array containing the values to convert from (bit values).
+		 */
+        template <uint64_t OtherSize>
+        constexpr void from_bool_array(const bool(&arr)[OtherSize]) noexcept
+        {
+            clear();
+            _from_bool_array<OtherSize>(arr);
+        }
+
+        /**
+         * Bool pointer array to bitset conversion function
+         * @tparam PtrArr Used to constrain type to const bool* [don't use]
+         * @param ptr Pointer to the bool array containing the values to initialize the bitset with (bit values). It's size must be >= size()
+         */
+        template <typename PtrArr = const bool*> requires (std::is_pointer_v<PtrArr> && !std::is_array_v<PtrArr>&& std::is_same_v<const bool*, PtrArr> && !std::is_same_v<std::remove_cvref_t<BlockType>, bool*>)
+        void from_bool_array(PtrArr ptr) noexcept
+        {
+            clear();
+            _from_bool_array<PtrArr>(ptr);
+        }
+
         /**
          * bitset to bool array conversion function
          * @return Pointer to array of booleans containing the bit values (size of the array == m_size template parameter)
@@ -2010,102 +2262,27 @@ namespace woj
         }
 
         /**
-         * bitset to block array conversion function [or basically copy m_data]
-         * @return Array of block values (size of the array == storage_size())
-         */
-        [[nodiscard]] BlockType* to_block_array() const noexcept
-        {
-            BlockType result = new BlockType[m_storage_size];
-            std::copy(m_data, m_data + m_storage_size, result);
-            return result;
-        }
-
-        /**
-		 * bitset to bool pointer array conversion function
-		 * @tparam T Type of the container to convert to [must have fixed size equal to Size, value_type equal to bool, support iterator]
-		 * @return Container provided, containing bool(bit) values.
+		 * integral value to bitset conversion function
+		 * @tparam T Type of the integral value to convert from
+		 * @param value Value to convert from
 		 */
-        template <fixed_has_read_write_iterator T> requires fixed_has_read_write_iterator<T> && std::is_same_v<bool, typename T::value_type>
-        [[nodiscard]] constexpr T to_fixed_bool_container() const noexcept
+        template <unsigned_integer T>
+        constexpr void from_integer(const T& value) noexcept
         {
-            T result;
-
-            typename T::iterator it = result.begin();
-
-            for (size_t i = 0; i < m_full_storage_size; ++i)
+            clear();
+            if (sizeof(T) <= sizeof(BlockType))
             {
-                for (uint16_t j = 0; j < m_block_size; ++j)
-                    *it++ = m_data[i] & BlockType{1} << j;
+                m_data[0] = m_data[0] & ~static_cast<BlockType>((std::numeric_limits<T>::max)()) | value;
+                return;
             }
-            if (m_partial_size)
+
+            constexpr uint16_t diff = sizeof(T) / sizeof(BlockType);
+
+            for (uint16_t i = 0; i < diff; ++i)
             {
-                for (size_t i = 0; i < m_partial_size; ++i)
-                    *it++ = m_data[i] & BlockType{1} << i;
+                m_data[i] = value >> i * m_block_size;
             }
-            return result;
         }
-
-        /**
-		 * bitset to bool dynamic container conversion function
-		 * @tparam T Type of the container to convert to [must have dynamic size, constructor that takes 1 argument of type size_t [size of the container], value_type equal to bool, support iterator]
-		 * @return Container provided, containing bool(bit) values.
-		 */
-        template <dynamic_has_read_write_iterator T> requires std::is_same_v<bool, typename T::value_type>
-        [[nodiscard]] T to_dynamic_bool_container() const noexcept
-        {
-            T result(Size);
-
-            typename T::iterator it = result.begin();
-
-            for (size_t i = 0; i < m_full_storage_size; ++i)
-            {
-                for (uint16_t j = 0; j < m_block_size; ++j)
-                    *it++ = m_data[i] & BlockType{ 1 } << j;
-            }
-            if (m_partial_size)
-            {
-                for (size_t i = 0; i < m_partial_size; ++i)
-                    *it++ = m_data[i] & BlockType{ 1 } << i;
-            }
-            return result;
-        }
-
-        /**
-         * bitset to block fixed container conversion function
-         * @tparam T Type of the container to convert to [must have fixed size equal to Size, value_type equal to BlockType, support iterator]
-         * @return Container provided, containing block values.
-         */
-        template <fixed_has_read_write_iterator T> requires std::is_same_v<BlockType, typename T::value_type>
-		[[nodiscard]] constexpr T to_fixed_block_container() const noexcept
-        {
-	        T result;
-
-            typename T::iterator it = result.begin();
-
-			for (size_t i = 0; i < m_storage_size; ++i)
-				*it++ = m_data[i];
-
-			return result;
-		}
-
-        /**
-		 * bitset to block dynamic container conversion function
-		 * @tparam T Type of the container to convert to [must have dynamic size, constructor that takes 1 argument of type size_t [size of the container], value_type equal to BlockType, support iterator]
-		 * @return Container provided, containing block values.
-		 */
-        template <dynamic_has_read_write_iterator T> requires std::is_same_v<BlockType, typename T::value_type>
-        [[nodiscard]] constexpr T to_dynamic_block_container() const noexcept
-        {
-            T result(Size);
-
-            typename T::iterator it = result.begin();
-
-            for (size_t i = 0; i < m_storage_size; ++i)
-                *it++ = m_data[i];
-
-            return result;
-        }
-
 
         /**
 		 * bitset to integral value conversion function
@@ -2126,40 +2303,10 @@ namespace woj
             return result;
         }
 
-        /**
-		 * integral value to bitset conversion function
-		 * @tparam T Type of the integral value to convert from
-		 * @param value Value to convert from
-		 */
-        template <unsigned_integer T>
-        constexpr void from_integer(const T& value) noexcept
-        {
-            if (std::is_constant_evaluated())
-            {
-                for (BlockType& block : m_data)
-                    block = 0;
-            }
-            else
-                ::memset(m_data, 0, m_storage_size * sizeof(BlockType));
-
-            if (sizeof(T) <= sizeof(BlockType))
-            {
-                m_data[0] = m_data[0] & ~static_cast<BlockType>((std::numeric_limits<T>::max)()) | value;
-                return;
-            }
-
-            constexpr uint16_t diff = sizeof(T) / sizeof(BlockType);
-
-            for (uint16_t i = 0; i < diff; ++i)
-            {
-                m_data[i] = value >> i * m_block_size;
-            }
-        }
-
         // Utility functions
 
         /**
-         * Returns current dynamic_bitset instance as const reference (use when iterating, using [] operator, ...)
+         * Returns current dynamic_bitset instance as const to enable optimizations (use when iterating, using [] operator, ...)
          */
         [[nodiscard]] constexpr const bitset& as_const() const noexcept
         {
@@ -2171,7 +2318,7 @@ namespace woj
          * @param index_1 Index of first value to swap (bit index)
          * @param index_2 Index of second value to swap (bit index)
          */
-        void swap(const size_t& index_1, const size_t& index_2) noexcept
+        constexpr void swap(const size_t& index_1, const size_t& index_2) noexcept
         {
             const bool tmp = test(index_1);
             set(index_1, test(index_2));
@@ -2181,7 +2328,7 @@ namespace woj
         /**
          * Reverses the bitset (bit values)
          */
-        void reverse() noexcept
+        constexpr void reverse() noexcept
         {
             for (size_t i = 0; i < Size / 2; ++i)
             {
@@ -2193,7 +2340,7 @@ namespace woj
          * Rotates each bit to the left by the specified amount
          * @param shift Amount of bits to rotate to the left
          */
-        void rotate(const size_t& shift) noexcept
+        constexpr void rotate(const size_t& shift) noexcept
         {
         	const bitset tmp_cpy = *this;
             for (size_t i = 0; i < Size; ++i)
@@ -4124,118 +4271,7 @@ namespace woj
 		 */
         explicit dynamic_bitset(const size_t& size) noexcept : m_partial_size(size % m_block_size), m_storage_size(size / m_block_size + !!m_partial_size), m_size(size), m_data(new BlockType[m_storage_size])
         {
-            ::memset(m_data, 0, m_storage_size * sizeof(BlockType));;
-        }
-
-        /**
-         * Initializer list constructor
-         * @param list Initializer list to fill the bitset with, containing block values
-         */
-        dynamic_bitset(const std::initializer_list<BlockType>& list) noexcept : m_partial_size(list.size() % m_block_size), m_storage_size(list.size()), m_size(list.size() * m_block_size), m_data(new BlockType[m_storage_size])
-        {
-            std::copy(list.begin(), list.end(), m_data);
-        }
-
-        /**
-		 * Size and initializer list constructor
-		 * @param size Size of the bitset to create (bit count)
-		 * @param list Initializer list to fill the bitset with, containing block values
-		 */
-        explicit dynamic_bitset(const size_t& size, const std::initializer_list<BlockType>& list) noexcept : m_partial_size(size % m_block_size), m_storage_size(size / m_block_size + !!m_partial_size), m_size(list.size()* m_block_size), m_data(new BlockType[m_storage_size])
-        {
-            ::memset(m_data, 0, m_storage_size * sizeof(BlockType));;
-            std::copy(list.begin(), list.begin() + (std::min)(m_storage_size, list.size()), m_data);
-        }
-
-        /**
-         * General initializer list constructor
-         * @tparam OtherBlockType Type of the block to fill the bitset with
-         * @param list Initializer list to fill the bitset with, containing block values
-         */
-        template <unsigned_integer OtherBlockType> requires (std::convertible_to<OtherBlockType, BlockType> && !std::is_same_v<BlockType, OtherBlockType>)
-        dynamic_bitset(const std::initializer_list<OtherBlockType>& list) noexcept : m_partial_size(sizeof(OtherBlockType) * list.size() % sizeof(BlockType)), m_storage_size(static_cast<size_t>(static_cast<double>(sizeof(OtherBlockType) * list.size()) / sizeof(BlockType) + !!m_partial_size)), m_size(m_storage_size * m_block_size), m_data(new BlockType[m_storage_size])
-        {
-            typename std::initializer_list<OtherBlockType>::const_iterator it = list.begin();
-
-            if (sizeof(BlockType) > sizeof(OtherBlockType))
-            {
-                constexpr uint16_t diff = sizeof(BlockType) / sizeof(OtherBlockType), other_block_size = sizeof(OtherBlockType) * 8;
-
-                for (size_t i = 0; i < m_storage_size; ++i)
-                {
-                    for (size_t j = 0; j < diff; ++j)
-                    {
-                        if (it == list.end())
-                        {
-	                        return;
-                        }
-                        *(m_data + i) |= static_cast<BlockType>(*it++) << j * other_block_size;
-                    }
-                }
-            }
-            else
-            {
-                constexpr uint16_t diff = sizeof(OtherBlockType) / sizeof(BlockType);
-
-                for (size_t i = 0; i < list.size(); ++i)
-                {
-                    for (uint16_t j = 0; j < diff; ++j)
-                    {
-                        if (i * diff + j >= m_storage_size)
-                        {
-                            return;
-                        }
-                        *(m_data + i * diff + j) = *it >> j % diff * m_block_size;
-                    }
-                    ++it;
-                }
-            }
-        }
-
-        /**
-		 * Size and general initializer list constructor
-		 * @tparam OtherBlockType Type of the block to fill the bitset with
-		 * @param size Size of the bitset to create (bit count)
-		 * @param list Initializer list to fill the bitset with, containing block values
-		 */
-        template <unsigned_integer OtherBlockType> requires (std::convertible_to<OtherBlockType, BlockType> && !std::is_same_v<BlockType, OtherBlockType>)
-        explicit dynamic_bitset(const size_t& size, const std::initializer_list<OtherBlockType>& list) noexcept : m_partial_size(size % sizeof(BlockType)), m_storage_size(size / m_block_size + !!m_partial_size), m_size(size), m_data(new BlockType[m_storage_size])
-        {
-            ::memset(m_data, 0, m_storage_size * sizeof(BlockType));;
-            typename std::initializer_list<OtherBlockType>::const_iterator it = list.begin();
-            const size_t min_storage_size = (std::min<size_t>)(list.size(), m_storage_size);
-
-            if (sizeof(BlockType) > sizeof(OtherBlockType))
-            {
-                constexpr uint16_t diff = sizeof(BlockType) / sizeof(OtherBlockType), other_block_size = sizeof(OtherBlockType) * 8;
-
-                for (size_t i = 0; i < m_storage_size; ++i)
-                {
-                    for (size_t j = 0; j < diff; ++j)
-                    {
-                        if (it == list.end())
-                            return;
-                        m_data[i] |= static_cast<BlockType>(*it++) << j * other_block_size;
-                    }
-                }
-            }
-            else
-            {
-                constexpr uint16_t diff = sizeof(OtherBlockType) / sizeof(BlockType);
-
-                for (size_t i = 0; i < min_storage_size; ++i)
-                {
-                    for (uint16_t j = 0; j < diff; ++j)
-                    {
-                        if (i * diff + j >= m_storage_size)
-                        {
-	                        return;
-                        }
-                        m_data[i * diff + j] = *it >> j % diff * m_block_size;
-                    }
-                    ++it;
-                }
-            }
+            clear();
         }
 
         /**
@@ -4244,7 +4280,7 @@ namespace woj
          * @param size Size of the bitset to create (bit count)
          * @param val Bool value to fill the bitset with (bit value)
          */
-        template <unsigned_integer U = std::remove_cvref_t<BlockType>> requires !std::is_same_v<bool, U> && !std::is_pointer_v<U> && !std::is_array_v<U>
+        template <unsigned_integer U = std::remove_cvref_t<BlockType>> requires (!std::is_same_v<bool, U> && !std::is_pointer_v<U> && !std::is_array_v<U>)
         explicit dynamic_bitset(const size_t& size, const bool& val) noexcept : m_partial_size(size % m_block_size), m_storage_size(size / m_block_size + !!m_partial_size), m_size(size), m_data(new BlockType[m_storage_size])
         {
 	        fill(val);
@@ -4266,7 +4302,8 @@ namespace woj
          */
         dynamic_bitset(const dynamic_bitset& other) noexcept : m_partial_size(other.m_partial_size), m_storage_size(other.m_storage_size), m_size(other.m_size), m_data(new BlockType[other.m_storage_size])
         {
-            std::copy(other.m_data, other.m_data + other.m_storage_size, m_data);
+            //std::copy(other.m_data, other.m_data + other.m_storage_size, m_data);
+            _from_other(other);
         }
 
         /**
@@ -4276,17 +4313,19 @@ namespace woj
          */
     	dynamic_bitset(const size_t& size, const dynamic_bitset& other) noexcept : m_partial_size(size % m_block_size), m_storage_size(size / m_block_size + !!m_partial_size), m_size(size), m_data(new BlockType[m_storage_size])
         {
-            ::memset(m_data, 0, m_storage_size * sizeof(BlockType));;
-            std::copy(other.m_data, other.m_data + (std::min)(m_storage_size, other.m_storage_size), m_data);
+            //::memset(m_data, 0, m_storage_size * sizeof(BlockType));;
+            //std::copy(other.m_data, other.m_data + (std::min)(m_storage_size, other.m_storage_size), m_data);
+            _from_other(other);
         }
 
         /**
          * Move constructor
-         * @param other Other instance to move from
+         * @param other Other dynamic_bitset instance to move from
          */
         dynamic_bitset(dynamic_bitset&& other) noexcept : m_partial_size(other.m_partial_size), m_storage_size(other.m_storage_size), m_size(other.m_size), m_data(other.m_data)
         {
-            other.m_partial_size = other.m_storage_size = other.m_size = other.m_data = 0;
+            //other.m_partial_size = other.m_storage_size = other.m_size = other.m_data = 0;
+            _from_other(other);
         }
 
         /**
@@ -4297,38 +4336,8 @@ namespace woj
         template <unsigned_integer OtherBlockType> requires (std::convertible_to<OtherBlockType, BlockType> && !std::is_same_v<BlockType, OtherBlockType>)
     	dynamic_bitset(const dynamic_bitset<OtherBlockType>& other) noexcept : m_partial_size(other.m_size % m_block_size), m_storage_size(static_cast<size_t>(static_cast<double>(sizeof(OtherBlockType) / sizeof(BlockType)) * other.m_storage_size + !!m_partial_size)), m_size(other.m_size), m_data(new BlockType[m_storage_size])
         {
-            if (sizeof(BlockType) > sizeof(OtherBlockType))
-            {
-                constexpr uint16_t diff = sizeof(BlockType) / sizeof(OtherBlockType);
-
-                for (size_t i = 0; i < m_storage_size; ++i)
-                {
-                    for (size_t j = 0; j < diff; ++j)
-                    {
-                        if (i * diff + j >= other.m_storage_size)
-                        {
-                            return;
-                        }
-                        m_data[i] |= static_cast<BlockType>(other.m_data[i * diff + j]) << j * other.m_block_size;
-                    }
-                }
-            }
-            else
-            {
-                constexpr uint16_t diff = sizeof(OtherBlockType) / sizeof(BlockType);
-
-                for (size_t i = 0; i < other.m_storage_size; ++i)
-                {
-                    for (uint16_t j = 0; j < diff; ++j)
-                    {
-                        if (i * diff + j >= m_storage_size)
-                        {
-                            return;
-                        }
-                        m_data[i * diff + j] = other.m_data[i] >> j % diff * m_block_size;
-                    }
-                }
-            }
+            clear();
+            _from_other<OtherBlockType>(other);
         }
 
         /**
@@ -4340,39 +4349,8 @@ namespace woj
         template <unsigned_integer OtherBlockType> requires (std::convertible_to<OtherBlockType, BlockType> && !std::is_same_v<BlockType, OtherBlockType>)
         explicit dynamic_bitset(const size_t& size, const dynamic_bitset<OtherBlockType>& other) noexcept : m_partial_size(size % m_block_size), m_storage_size(size / sizeof(BlockType) + !!m_partial_size), m_size(size), m_data(new BlockType[m_storage_size])
         {
-            ::memset(m_data, 0, m_storage_size * sizeof(BlockType));;
-            if (sizeof(BlockType) > sizeof(OtherBlockType))
-            {
-                constexpr uint16_t diff = sizeof(BlockType) / sizeof(OtherBlockType);
-
-                for (size_t i = 0; i < (std::min)(m_storage_size, other.m_storage_size); ++i)
-                {
-                    for (size_t j = 0; j < diff; ++j)
-                    {
-                        if (i * diff + j >= other.m_storage_size)
-                        {
-                            return;
-                        }
-                        m_data[i] |= static_cast<BlockType>(other.m_data[i * diff + j]) << j * other.m_block_size;
-                    }
-                }
-            }
-            else
-            {
-                constexpr uint16_t diff = sizeof(OtherBlockType) / sizeof(BlockType);
-
-                for (size_t i = 0; i < (std::min)(m_storage_size, other.m_storage_size); ++i)
-                {
-                    for (uint16_t j = 0; j < diff; ++j)
-                    {
-                        if (i * diff + j >= m_storage_size)
-                        {
-                            return;
-                        }
-                        m_data[i * diff + j] = other.m_data[i] >> j % diff * m_block_size;
-                    }
-                }
-            }
+            clear();
+            _from_other<OtherBlockType>(other);
         }
 
         /**
@@ -4383,19 +4361,10 @@ namespace woj
          * @param set_chr Character that represents set bits
          */
         template <char_type Elem, size_t StrSize>
-        dynamic_bitset(const Elem(&c_str)[StrSize], const Elem& set_chr = '1') noexcept : m_partial_size(StrSize % m_block_size), m_storage_size(StrSize / m_block_size + !!m_partial_size), m_size(StrSize), m_data(new BlockType[m_storage_size])
+        dynamic_bitset(const Elem(&c_str)[StrSize], const Elem& set_chr = '1') noexcept : m_partial_size((StrSize - 1) % m_block_size), m_storage_size((StrSize - 1) / m_block_size + !!m_partial_size), m_size(StrSize - 1), m_data(new BlockType[m_storage_size])
         {
-            for (size_t i = 0; i < m_storage_size; ++i)
-            {
-                for (uint16_t j = 0; j < m_block_size; ++j)
-                {
-                    if (!c_str[i * m_block_size + j])
-                    {
-                        return;
-                    }
-                    m_data[i] |= c_str[i * m_block_size + j] == set_chr ? BlockType{ 1 } << j : 0;
-                }
-            }
+            clear();
+            _from_c_string<Elem, StrSize>(c_str, set_chr);
         }
 
         /**
@@ -4409,16 +4378,8 @@ namespace woj
         template <char_type Elem, size_t StrSize>
         explicit dynamic_bitset(const size_t& size, const Elem(&c_str)[StrSize], const Elem& set_chr = '1') noexcept : m_partial_size(size % m_block_size), m_storage_size(size / m_block_size + !!m_partial_size), m_size(size), m_data(new BlockType[m_storage_size])
         {
-            ::memset(m_data, 0, m_storage_size * sizeof(BlockType));;
-            for (size_t i = 0; i < m_storage_size; ++i)
-            {
-                for (uint16_t j = 0; j < m_block_size; ++j)
-                {
-                    if (!c_str[i * m_block_size + j])
-                        return;
-                    m_data[i] |= c_str[i * m_block_size + j] == set_chr ? BlockType{ 1 } << j : 0;
-                }
-            }
+            clear();
+            _from_c_string<Elem, StrSize>(c_str, set_chr);
         }
 
         /**
@@ -4429,19 +4390,11 @@ namespace woj
          * @param c_str Pointer to c string to fill the bitset with (must be null-terminated)
          * @param set_chr Character that represents set bits
          */
-        template <typename PtrArr = const char*, typename Elem = std::remove_cvref_t<std::remove_pointer_t<std::remove_cvref_t<PtrArr>>>> requires std::is_pointer_v<PtrArr> && !std::is_array_v<PtrArr> && char_type<Elem>
+        template <typename PtrArr = const char*, char_type Elem = std::remove_cvref_t<std::remove_pointer_t<std::remove_cvref_t<PtrArr>>>> requires (std::is_pointer_v<PtrArr> && !std::is_array_v<PtrArr>&& char_type<Elem>)
         explicit dynamic_bitset(const size_t& size, PtrArr c_str, const Elem& set_chr = '1') noexcept : m_partial_size(size % m_block_size), m_storage_size(size / m_block_size + !!m_partial_size), m_size(size), m_data(new BlockType[m_storage_size])
         {
-            ::memset(m_data, 0, m_storage_size * sizeof(BlockType));;
-            for (size_t i = 0; i < m_storage_size; ++i)
-            {
-                for (uint16_t j = 0; j < m_block_size; ++j)
-                {
-                    if (!*c_str)
-                    {    return;}
-                    m_data[i] |= *c_str++ == set_chr ? BlockType{ 1 } << j : 0;
-                }
-            }
+            clear();
+            _from_c_string<PtrArr, Elem>(c_str, set_chr);
         }
 
         /**
@@ -4453,15 +4406,8 @@ namespace woj
         template <char_type Elem>
         dynamic_bitset(const std::basic_string<Elem>& str, const Elem& set_chr = '1') noexcept : m_partial_size(str.size() % m_block_size), m_storage_size(str.size() / m_block_size + !!m_partial_size), m_size(str.size()), m_data(new BlockType[m_storage_size])
         {
-	        for (size_t i = 0; i < m_storage_size; ++i)
-	        {
-	            for (uint16_t j = 0; j < m_block_size; ++j)
-	            {
-	                if (i * m_block_size + j >= str.size())
-	                    return;
-	                m_data[i] |= str[i * m_block_size + j] == set_chr ? BlockType{ 1 } << j : 0;
-	            }
-	        }
+            clear();
+            _from_string(str, set_chr);
         }
 
         /**
@@ -4473,220 +4419,102 @@ namespace woj
 		 * @param sep_present Whenever character that separates the bit blocks exists
 		 */
         template <typename Elem>
-        explicit dynamic_bitset(const size_t& size, const std::basic_string<Elem>& str, const Elem& set_chr = '1', const bool& sep_present = false) noexcept : m_partial_size(size % m_block_size), m_storage_size(size / m_block_size + !!m_partial_size), m_size(size), m_data(new BlockType[m_storage_size])
+        explicit dynamic_bitset(const size_t& size, const std::basic_string<Elem>& str, const Elem& set_chr = '1') noexcept : m_partial_size(size % m_block_size), m_storage_size(size / m_block_size + !!m_partial_size), m_size(size), m_data(new BlockType[m_storage_size])
         {
-            ::memset(m_data, 0, m_storage_size * sizeof(BlockType));;
-            if (!sep_present)
-            {
-                for (size_t i = 0; i < m_storage_size; ++i)
-                {
-                    for (uint16_t j = 0; j < m_block_size; ++j)
-                    {
-                        if (i * m_block_size + j >= str.size())
-                            return;
-                        m_data[i] |= str[i * m_block_size + j] == set_chr ? BlockType{ 1 } << j : 0;
-                    }
-                }
-            }
-            else
-            {
-                //size_t index = 0;
-                for (size_t i = 0; i < m_storage_size; ++i)
-                {
-                    for (uint16_t j = 0; j < m_block_size; ++j)
-                    {
-                        if (i * m_block_size + j + i >= str.size())
-                            return;
-                        m_data[i] |= str[i * m_block_size + j + i] == set_chr ? BlockType{ 1 } << j : 0;
-                    }
-                    // skip separator char implicitly in expression above (... + i)
-                }
-            }
-        }
-
-        /**
-         * Size and bool pointer array conversion constructor
-         * @tparam ArrType Type of the array [don't use]
-         * @param size Size of bitset to create (bit count)
-         * @param ptr Pointer to the bool array containing the values to initialize the bitset with (bit values). It's size must be >= size()
-         */
-        template <typename PtrArr = const bool*> requires std::is_pointer_v<PtrArr> && !std::is_array_v<PtrArr> && std::is_same_v<const bool*, PtrArr>
-        explicit dynamic_bitset(const size_t& size, PtrArr ptr) noexcept : m_partial_size(size % m_block_size), m_storage_size(size / m_block_size + !!m_partial_size), m_size(size), m_data(new BlockType[m_storage_size])
-        {
-            ::memset(m_data, 0, m_storage_size * sizeof(BlockType));;
-            for (size_t i = 0; i < m_storage_size - !!m_partial_size; ++i)
-            {
-                for (uint16_t j = 0; j < m_block_size; ++j)
-                    m_data[i] |= *ptr++ << j;
-            }
-            if (m_partial_size)
-            {
-                for (uint16_t j = 0; j < m_partial_size; ++j)
-                    m_data[m_storage_size - 1] |= static_cast<BlockType>(*ptr++) << j;
-            }
+            clear();
+            _from_string(str, set_chr);
         }
 
         /**
          * Bool array conversion constructor
+         * @tparam ArrType Used to constrain type. [don't use]
          * @tparam OtherSize Size of the bool array to copy from
          * @param arr Bool array containing the values to initialize the bitset with (bit values).
          */
-        template <uint64_t OtherSize>
+        template <typename ArrType = bool, uint64_t OtherSize> requires (std::is_same_v<ArrType, bool>)
         dynamic_bitset(const bool (&arr)[OtherSize]) noexcept : m_partial_size(OtherSize % m_block_size), m_storage_size(OtherSize / m_block_size + !!m_partial_size), m_size(OtherSize), m_data(new BlockType[m_storage_size])
         {
-            for (size_t i = 0; i < m_storage_size - !!m_partial_size; ++i)
-            {
-                for (uint16_t j = 0; j < m_block_size; ++j)
-                {
-                    if (i * m_block_size + j >= OtherSize)
-                    {
-                        return;
-                    }
-	                m_data[i] |= arr[i * m_block_size + j] << j;
-                }
-            }
-            if (m_partial_size)
-            {
-                for (uint16_t j = 0; j < m_partial_size; ++j)
-                    m_data[m_storage_size - 1] |= static_cast<BlockType>(arr[m_storage_size - !!m_partial_size * m_block_size + j]) << j;
-            }
+            clear();
+            _from_bool_array<OtherSize>(arr);
         }
 
         /**
 		 * Size and bool array conversion constructor
+         * @tparam ArrType Used to constrain type. [don't use]
 		 * @tparam OtherSize Size of the bool array to copy from
 		 * @param size Size of the bitset to create (bit count)
 		 * @param arr Bool array containing the values to initialize the bitset with (bit values).
 		 */
-        template <uint64_t OtherSize>
-        explicit dynamic_bitset(const size_t& size, const bool(&arr)[OtherSize]) noexcept : m_partial_size(size % m_block_size), m_storage_size(size / m_block_size + !!m_partial_size), m_size(size), m_data(new BlockType[m_storage_size])
+        template <typename ArrType = bool, uint64_t OtherSize> requires (std::is_same_v<ArrType, bool>)
+        explicit dynamic_bitset(const size_t& size, const ArrType(&arr)[OtherSize]) noexcept : m_partial_size(size % m_block_size), m_storage_size(size / m_block_size + !!m_partial_size), m_size(size), m_data(new BlockType[m_storage_size])
         {
-            ::memset(m_data, 0, m_storage_size * sizeof(BlockType));;
-            for (size_t i = 0; i < m_storage_size - !!m_partial_size; ++i)
-            {
-                for (uint16_t j = 0; j < m_block_size; ++j)
-                {
-                    if (i * m_block_size + j >= OtherSize)
-                    {
-                        return;
-                    }
-	                m_data[i] |= arr[i * m_block_size + j] << j;
-                }
-            }
-            if (m_partial_size)
-            {
-                for (uint16_t j = 0; j < m_partial_size; ++j)
-                    m_data[m_storage_size - 1] |= static_cast<BlockType>(arr[m_storage_size - !!m_partial_size * m_block_size + j]) << j;
-            }
+            clear();
+            _from_bool_array<OtherSize>(arr);
         }
 
         /**
-		 * Bool pointer array conversion constructor
-		 * @tparam PtrArr Used to constrain type to const bool* [don't use]
+		 * Size and bool pointer array conversion constructor
+		 * @tparam PtrArr Used to constrain type [don't use]
 		 * @param size Size of the bitset to create (bit count)
-		 * @param ptr Pointer to the bool array containing the values to initialize the bitset with (bit values). It's size must be >= size
+		 * @param ptr Pointer to the bool array containing the values to convert from (bit values). It's size must be >= size
 		 */
-        template <typename PtrArr = const bool*> requires std::is_pointer_v<PtrArr> && !std::is_array_v<PtrArr> && std::is_same_v<const bool*, PtrArr> && !std::is_same_v<std::remove_cvref_t<BlockType>, bool*>
+        template <typename PtrArr = const bool*> requires (std::is_pointer_v<PtrArr> && !std::is_array_v<PtrArr>&& std::is_same_v<const bool*, PtrArr> && !std::is_same_v<std::remove_cvref_t<BlockType>, bool*>)
         explicit dynamic_bitset(const size_t& size, PtrArr ptr) noexcept : m_partial_size(size % m_block_size), m_storage_size(size / m_block_size + !!m_partial_size), m_size(size), m_data(new BlockType[m_storage_size])
         {
-            ::memset(m_data, 0, m_storage_size * sizeof(BlockType));;
-            for (size_t i = 0; i < m_storage_size - !!m_partial_size; ++i)
-            {
-                for (uint16_t j = 0; j < m_block_size; ++j)
-                    m_data[i] |= *ptr++ << j;
-            }
-            if (m_partial_size)
-            {
-                for (uint16_t j = 0; j < m_partial_size; ++j)
-                    m_data[m_storage_size - 1] |= static_cast<BlockType>(*ptr++) << j;
-            }
+            clear();
+            _from_bool_array<PtrArr>(ptr);
         }
 
         /**
-         * BlockType stack array conversion constructor
+         * Block stack array copy constructor
          * @tparam OtherSize m_size of the other bitset to copy from
          * @param arr Array of BlockType values to initialize the bitset with (block values).
          */
         template <size_t OtherSize>
         dynamic_bitset(const BlockType(&arr)[OtherSize]) noexcept : m_partial_size(0), m_storage_size(OtherSize), m_size(m_storage_size * m_block_size), m_data(new BlockType[m_storage_size])
         {
-            for (size_t i = 0; i < OtherSize; ++i)
-                m_data[i] = arr[i];
+            _from_block_array<OtherSize>(arr);
         }
 
         /**
-		 * Size and block stack array conversion constructor
-		 * @tparam OtherSize m_size of the other bitset to copy from
+		 * Size and block stack array copy constructor
+		 * @tparam OtherSize size of the block array
 		 * @param size Size of the bitset to create (bit count)
 		 * @param arr Array of BlockType values to initialize the bitset with (block values).
 		 */
         template <size_t OtherSize>
         explicit dynamic_bitset(const size_t& size, const BlockType(&arr)[OtherSize]) noexcept : m_partial_size(size % m_block_size), m_storage_size(size / m_block_size + !!m_partial_size), m_size(size), m_data(new BlockType[m_storage_size])
         {
-            ::memset(m_data, 0, m_storage_size * sizeof(BlockType));;
-            for (size_t i = 0; i < (std::min)(m_storage_size, OtherSize); ++i)
-                m_data[i] = arr[i];
+            _from_block_array<OtherSize>(arr);
         }
 
         /**
-         * Size and block pointer array conversion constructor
+         * Size and block pointer array copy constructor
          * @tparam PtrArr Type of the pointer array [don't use]
          * @param size Size of bitset to create (bit count)
          * @param ptr Pointer to array of BlockType values to initialize the bitset with (block values). It's size must be >= storage_size()
          */
-        template <typename PtrArr = const BlockType*> requires std::is_pointer_v<PtrArr> && !std::is_array_v<PtrArr> && std::is_same_v<BlockType, std::remove_cvref_t<std::remove_pointer_t<PtrArr>>>
+        template <typename PtrArr = const BlockType*> requires (std::is_pointer_v<PtrArr> && !std::is_array_v<PtrArr>&& std::is_same_v<BlockType, std::remove_cvref_t<std::remove_pointer_t<PtrArr>>>)
         explicit dynamic_bitset(const size_t& size, const PtrArr ptr) noexcept : m_partial_size(size % m_block_size), m_storage_size(size / m_block_size + !!m_partial_size), m_size(size), m_data(new BlockType[m_storage_size])
         {
-            ::memset(m_data, 0, m_storage_size * sizeof(BlockType));;
-            for (size_t i = 0; i < m_storage_size; ++i)
-                m_data[i] = *ptr++;
+            _from_block_array<PtrArr>(ptr);
         }
 
         /**
-         * General stack block array conversion constructor
+         * Stack block array copy constructor with different block type
          * @tparam OtherBlockType Type of the block to copy from
          * @tparam OtherSize m_size of the other bitset to copy from
          * @param arr Array of block values to initialize bitset with.
          */
         template <unsigned_integer OtherBlockType, size_t OtherSize> requires (std::convertible_to<OtherBlockType, BlockType> && !std::is_same_v<BlockType, OtherBlockType>)
-        dynamic_bitset(const OtherBlockType(&arr)[OtherSize]) noexcept : m_partial_size(0), m_storage_size(static_cast<size_t>(static_cast<double>(sizeof(OtherBlockType)) / sizeof(BlockType) * OtherSize)), m_size(m_storage_size * m_block_size), m_data(new BlockType[m_storage_size])
+        dynamic_bitset(const OtherBlockType(&arr)[OtherSize]) noexcept : m_partial_size(0), m_storage_size(static_cast<size_t>(std::ceil(static_cast<double>(sizeof(OtherBlockType)) / sizeof(BlockType) * OtherSize))), m_size(m_storage_size * m_block_size), m_data(new BlockType[m_storage_size])
         {
-            if (sizeof(BlockType) > sizeof(OtherBlockType))
-            {
-                constexpr uint16_t diff = sizeof(BlockType) / sizeof(OtherBlockType), other_block_size = sizeof(OtherBlockType) * 8;
-
-                for (size_t i = 0; i < m_storage_size; ++i)
-                {
-                    for (size_t j = 0; j < diff; ++j)
-                    {
-                        if (i * diff + j > OtherSize)
-                        {
-                            return;
-                        }
-                        m_data[i] |= static_cast<BlockType>(arr[i * diff + j]) << j * other_block_size;
-                    }
-                }
-            }
-            else
-            {
-                constexpr uint16_t diff = sizeof(OtherBlockType) / sizeof(BlockType);
-
-                for (size_t i = 0; i < OtherSize; ++i)
-                {
-                    for (uint16_t j = 0; j < diff; ++j)
-                    {
-                        if (i * diff + j > m_storage_size)
-                        {
-                            return;
-                        }
-                        m_data[i * diff + j] = arr[i] >> j % diff * m_block_size;
-                    }
-                }
-            }
+            clear();
+            _from_block_array<OtherBlockType, OtherSize>(arr);
         }
 
 		/**
-		 * Size and general stack block array conversion constructor
+		 * Size and stack block array conversion constructor with different block type
 		 * @tparam OtherBlockType Type of the block to copy from
 		 * @tparam OtherSize m_size of the other bitset to copy from
 		 * @param size Size of the bitset to create (bit count)
@@ -4695,238 +4523,22 @@ namespace woj
         template <unsigned_integer OtherBlockType, size_t OtherSize> requires (std::convertible_to<OtherBlockType, BlockType> && !std::is_same_v<BlockType, OtherBlockType>)
     	explicit dynamic_bitset(const size_t& size, const OtherBlockType(&arr)[OtherSize]) noexcept : m_partial_size(size % m_block_size), m_storage_size(size / m_block_size + !!m_partial_size), m_size(size), m_data(new BlockType[m_storage_size])
         {
-            ::memset(m_data, 0, m_storage_size * sizeof(BlockType));;
-            if (sizeof(BlockType) > sizeof(OtherBlockType))
-            {
-                constexpr uint8_t diff = sizeof(BlockType) / sizeof(OtherBlockType), other_block_size = sizeof(OtherBlockType) * 8;
-
-                for (size_t i = 0; i < m_storage_size; ++i)
-                {
-                    for (size_t j = 0; j < diff; ++j)
-                    {
-                        if (i * diff + j > OtherSize)
-                        {
-                            return;
-                        }
-                        m_data[i] |= static_cast<BlockType>(arr[i * diff + j]) << j * other_block_size;
-                    }
-                }
-            }
-            else
-            {
-                constexpr uint8_t diff = sizeof(OtherBlockType) / sizeof(BlockType);
-
-                for (size_t i = 0; i < OtherSize; ++i)
-                {
-                    for (uint8_t j = 0; j < diff; ++j)
-                    {
-                        if (i * diff + j > m_storage_size)
-                        {
-                            return;
-                        }
-                        m_data[i * diff + j] = arr[i] >> j % diff * m_block_size;
-                    }
-                }
-            }
+            clear();
+            _from_block_array<OtherBlockType, OtherSize>(arr);
         }
 
         /**
-         * Size and general pointer array conversion constructor
+         * Size and pointer array conversion constructor with different block type
          * @tparam PtrArr Type of the block pointer array [don't use]
          * @tparam Elem Type of elem in the block pointer array [don't use]
          * @param size Size of bitset to create (bit count)
          * @param ptr Pointer to array of block values to initialize the bitset with. It's size must be >= storage_size()
          */
-        template <typename PtrArr, unsigned_integer Elem = std::remove_cvref_t<std::remove_pointer_t<std::remove_cvref_t<PtrArr>>>> requires std::convertible_to<Elem, BlockType> && std::convertible_to<BlockType, Elem> && !std::is_same_v<BlockType, Elem> && std::is_pointer_v<PtrArr> && !std::is_array_v<PtrArr> && !std::is_same_v<bool, Elem>
+        template <typename PtrArr, unsigned_integer Elem = std::remove_cvref_t<std::remove_pointer_t<std::remove_cvref_t<PtrArr>>>> requires (std::convertible_to<Elem, BlockType>&& std::convertible_to<BlockType, Elem> && !std::is_same_v<BlockType, Elem>&& std::is_pointer_v<PtrArr> && !std::is_array_v<PtrArr> && !std::is_same_v<bool, Elem>)
         explicit dynamic_bitset(const size_t& size, PtrArr const& ptr) noexcept : m_partial_size(size % m_block_size), m_storage_size(size / m_block_size + !!m_partial_size), m_size(size), m_data(new BlockType[m_storage_size])
         {
-            ::memset(m_data, 0, m_storage_size * sizeof(BlockType));;
-            if (sizeof(BlockType) > sizeof(Elem))
-            {
-                constexpr uint8_t diff = sizeof(BlockType) / sizeof(Elem), other_block_size = sizeof(Elem) * 8;
-
-                for (size_t i = 0; i < m_storage_size; ++i)
-                {
-                    for (size_t j = 0; j < diff; ++j)
-                        m_data[i] |= static_cast<BlockType>(*(ptr + i * diff + j)) << j * other_block_size;
-                }
-            }
-            else
-            {
-                constexpr uint8_t diff = sizeof(Elem) / sizeof(BlockType);
-
-                for (size_t i = 0; i < m_storage_size; ++i)
-                {
-                    for (uint8_t j = 0; j < diff; ++j)
-                        m_data[i * diff + j] = *(ptr + i) >> j % diff * m_block_size;
-                }
-            }
-        }
-
-        /**
-         * Block container conversion constructor
-         * @tparam T Type of the container to convert from [must have fixed size equal to m_size, value_type equal to BlockType, support const_iterator]
-         * @param cont Container containing block values
-         */
-        template <has_read_iterator T> requires std::is_same_v<BlockType, typename T::value_type>
-        dynamic_bitset(const T& cont) noexcept : m_partial_size(0), m_storage_size(std::size(cont)), m_size(m_storage_size * m_block_size), m_data(new BlockType[m_storage_size])
-        {
-            typename T::const_iterator it = cont.cbegin();
-
-            for (size_t i = 0; i < std::size(cont); ++i)
-                m_data[i] = *it++;
-        }
-
-        /**
-		 * Size and block container conversion constructor
-		 * @tparam T Type of the container to convert from [must have fixed size equal to m_size, value_type equal to BlockType, support const_iterator]
-		 * @param size Size of bitset to create (bit count)
-		 * @param cont Container containing block values to initialize the bitset with
-		 */
-        template <has_read_iterator T> requires std::is_same_v<BlockType, typename T::value_type>
-        explicit dynamic_bitset(const size_t& size, const T& cont) noexcept : m_partial_size(size % m_block_size), m_storage_size(size / m_block_size + !!m_partial_size), m_size(size), m_data(new BlockType[m_storage_size])
-        {
-            ::memset(m_data, 0, m_storage_size * sizeof(BlockType));;
-            typename T::const_iterator it = cont.cbegin();
-
-            for (size_t i = 0; i < (std::min)(m_storage_size, std::size(cont)); ++i)
-                m_data[i] = *it++;
-        }
-
-        /**
-         * General block container to bitset conversion function
-         * @tparam T Type of the container to convert from [must have fixed size equal to m_size, value_type equal to BlockType, support const_iterator]
-         * @param cont Container containing block values to convert from
-         */
-        template <has_read_iterator T> requires !std::is_same_v<BlockType, typename T::value_type> && unsigned_integer<typename T::value_type> && !std::is_same_v<bool, typename T::value_type>
-    	dynamic_bitset(const T& cont) noexcept : m_partial_size(0), m_storage_size(static_cast<size_t>(static_cast<double>(sizeof(typename T::value_type)) / sizeof(BlockType) * std::size(cont))), m_size(m_storage_size * m_block_size), m_data(new BlockType[m_storage_size])
-        {
-            typename T::const_iterator it = cont.cbegin();
-
-            if (sizeof(BlockType) > sizeof(T::value_type))
-            {
-                constexpr uint16_t diff = sizeof(BlockType) / sizeof(T::value_type), other_block_size = sizeof(T::value_type) * 8;
-
-                for (size_t i = 0; i < m_storage_size; ++i)
-                {
-                    m_data[i] = 0;
-                    for (size_t j = 0; j < diff; ++j)
-                    {
-                        if (it == cont.cend())
-                            return;
-	                    m_data[i] |= static_cast<BlockType>(*it++) << j * other_block_size;
-                    }
-                }
-            }
-            else
-            {
-                constexpr uint16_t diff = sizeof(T::value_type) / sizeof(BlockType);
-
-                for (size_t i = 0; i < cont.size(); ++i)
-                {
-                    for (uint16_t j = 0; j < diff; ++j)
-                    {
-                        if (i * diff + j >= m_storage_size)
-                        {    return;}
-	                    m_data[i * diff + j] = *it >> j % diff * m_block_size;
-                    }
-                    ++it;
-                }
-            }
-        }
-
-        /**
-		 * Size and general block container to bitset conversion function
-		 * @tparam T Type of the container to convert from [must have fixed size equal to m_size, value_type equal to BlockType, support const_iterator]
-		 * @param size Size of the bitset to create (bit count)
-		 * @param cont Container containing block values to convert from
-		 */
-        template <has_read_iterator T> requires !std::is_same_v<BlockType, typename T::value_type> && unsigned_integer<typename T::value_type> && !std::is_same_v<bool, typename T::value_type>
-        explicit dynamic_bitset(const size_t& size, const T& cont) noexcept : m_partial_size(size % m_block_size), m_storage_size(size / m_block_size + !!m_partial_size), m_size(size), m_data(new BlockType[m_storage_size])
-        {
             clear();
-            typename T::const_iterator it = cont.cbegin();
-
-            if (sizeof(BlockType) > sizeof(T::value_type))
-            {
-                constexpr uint16_t diff = sizeof(BlockType) / sizeof(T::value_type), other_block_size = sizeof(T::value_type) * 8;
-
-                for (size_t i = 0; i < m_storage_size; ++i)
-                {
-                    for (size_t j = 0; j < diff; ++j)
-                    {
-                        if (it == cont.cend())
-                        {
-	                        return;
-                        }
-	                    m_data[i] |= static_cast<BlockType>(*it++) << j * other_block_size;
-                    }
-                }
-            }
-            else
-            {
-                constexpr uint16_t diff = sizeof(T::value_type) / sizeof(BlockType);
-
-                for (size_t i = 0; i < cont.size(); ++i)
-                {
-                    for (uint16_t j = 0; j < diff; ++j)
-                    {
-                        if (i * diff + j > m_storage_size)
-                        {
-	                        return;
-                        }
-	                    m_data[i * diff + j] = *it >> j % diff * m_block_size;
-                    }
-                    ++it;
-                }
-            }
-        }
-
-        /**
-		 * Block container to bitset conversion function
-		 * @tparam T Type of the container to convert from [value_type equal to bool, support const_iterator]
-		 * @param cont Container containing bool values to convert from
-		 */
-        template <has_read_iterator T> requires std::is_same_v<bool, typename T::value_type>
-        explicit constexpr dynamic_bitset(const T& cont) noexcept : m_partial_size(cont.size() % m_block_size), m_storage_size(cont.size() / m_block_size + !!m_partial_size), m_size(cont.size()), m_data(new BlockType[m_storage_size])
-        {
-            typename T::const_iterator it = cont.cbegin();
-
-            for (size_t i = 0; i < m_storage_size; ++i)
-            {
-                for (size_t j = 0; j < m_block_size; ++j)
-                {
-                    if (it == cont.cend())
-                    {
-                        return;
-                    }
-                    m_data[i] |= static_cast<BlockType>(*it++) << j;
-                }
-            }
-        }
-
-        /**
-		 * Size and block container to bitset conversion function
-		 * @tparam T Type of the container to convert from [value_type equal to bool, support const_iterator]
-		 * @param size Size of bitset to create (bit count)
-		 * @param cont Container containing bool values to convert from
-		 */
-        template <has_read_iterator T> requires std::is_same_v<bool, typename T::value_type>
-        explicit constexpr dynamic_bitset(const size_t& size, const T& cont) noexcept : m_partial_size(size % m_block_size), m_storage_size(size / m_block_size + !!m_partial_size), m_size(size), m_data(new BlockType[m_storage_size])
-        {
-            typename T::const_iterator it = cont.cbegin();
-
-            for (size_t i = 0; i < m_storage_size; ++i)
-            {
-                for (size_t j = 0; j < m_block_size; ++j)
-                {
-                    if (it == cont.cend())
-                    {
-                        return;
-                    }
-                    m_data[i] |= static_cast<BlockType>(*it++) << j;
-                }
-            }
+            _from_block_array<PtrArr, Elem>(ptr);
         }
 
         /**
@@ -5254,31 +4866,243 @@ namespace woj
 
         // Conversion functions/operators
 
+    private:
+
         /**
-         * bitset to string conversion function
-         * @tparam Elem Type of character in the array
-         * @param set_chr Character to represent set bits
-         * @param rst_chr Character to represent clear bits
-         * @return String representation of the bitset
+         * Copy function
+         * @param other Other dynamic_bitset instance to copy from
          */
-        template <char_type Elem = char>
-        [[nodiscard]] std::basic_string<Elem> to_string(const Elem& set_chr = '1', const Elem& rst_chr = '0') const /* can't use noexcept - std::basic_string */
+        void _from_other(const dynamic_bitset& other) noexcept
         {
+            if (this != &other)
+                std::copy(other.m_data, other.m_data + (std::min<size_t>)(m_storage_size, other.m_storage_size), m_data);
+            for (size_t i = other.m_storage_size; i < m_storage_size; ++i)
+                *(m_data + i) = 0;
+        }
 
-            std::basic_string<Elem> result(m_size + 1, 0);
+        /**
+         * Move function
+         * @param other Other dynamic_bitset instance to move from
+         */
+        static void _from_other(dynamic_bitset&& other) noexcept
+        {
+            other.m_partial_size = other.m_partial_size = other.m_size = 0;
+            other.m_data = nullptr;
+        }
 
-            for (size_t i = 0; i < m_storage_size - !!m_partial_size; ++i)
+        /**
+         * Conversion function with different block type and size
+         * @tparam OtherBlockType Type of the block to convert from
+         * @tparam OtherSize Size of the other bitset to convert from
+         * @param other Other bitset instance to convert from
+         */
+        template <unsigned_integer OtherBlockType> requires (std::convertible_to<OtherBlockType, BlockType> && !std::is_same_v<BlockType, OtherBlockType>)
+        void _from_other(const dynamic_bitset<OtherBlockType>& other) noexcept
+        {
+            clear();
+            if (sizeof(BlockType) > sizeof(OtherBlockType))
+            {
+                constexpr uint16_t diff = sizeof(BlockType) / sizeof(OtherBlockType);
+
+                for (size_t i = 0; i < m_storage_size; ++i)
+                {
+                    for (size_t j = 0; j < diff; ++j)
+                    {
+                        if (i * diff + j >= other.m_storage_size)
+                        {
+                            return;
+                        }
+                        *(m_data + i) |= static_cast<BlockType>(other.m_data[i * diff + j]) << j * other.m_block_size;
+                    }
+                }
+            }
+            else
+            {
+                constexpr uint16_t diff = sizeof(OtherBlockType) / sizeof(BlockType);
+
+                for (size_t i = 0; i < other.m_storage_size; ++i)
+                {
+                    for (uint16_t j = 0; j < diff; ++j)
+                    {
+                        if (i * diff + j >= m_storage_size)
+                        {
+                            return;
+                        }
+                        *(m_data + i * diff + j) = other.m_data[i] >> j % diff * m_block_size;
+                    }
+                }
+            }
+        }
+
+        /**
+		 * String to bitset conversion function
+		 * @tparam Elem Type of the character array
+		 * @param str String to convert from (must be null-terminated)
+		 * @param set_chr Character that represents set bits
+		 */
+        template <char_type Elem>
+        void _from_string(const std::basic_string<Elem>& str, const Elem& set_chr = '1') noexcept
+        {
+            for (size_t i = 0; i < m_storage_size; ++i)
             {
                 for (uint16_t j = 0; j < m_block_size; ++j)
-                    result[i * m_block_size + j] = m_data[i] & BlockType{ 1 } << j ? set_chr : rst_chr;
+                {
+                    if (i * m_block_size + j >= str.size())
+                    {
+                        return;
+                    }
+                    m_data[i] |= str[i * m_block_size + j] == set_chr ? BlockType{ 1 } << j : 0;
+                }
             }
-            if (m_storage_size)
-            {
-                for (size_t i = 0; i < m_partial_size; ++i)
-                    result[(m_storage_size - 1) * m_block_size + i] = m_data[i] & BlockType{ 1 } << i ? set_chr : rst_chr;
-            }
-            return result;
         }
+
+        /**
+         * Block pointer array copy function
+         * @tparam PtrArr Type of the pointer array [don't use]
+         * @param ptr Pointer to array of BlockType values to initialize the bitset with (block values). It's size must be >= storage_size()
+         */
+        template <typename PtrArr = const BlockType*> requires (std::is_pointer_v<PtrArr> && !std::is_array_v<PtrArr>&& std::is_same_v<BlockType, std::remove_cvref_t<std::remove_pointer_t<std::remove_cvref_t<PtrArr>>>> && !std::is_same_v<bool, std::remove_cvref_t<std::remove_pointer_t<std::remove_cvref_t<PtrArr>>>>)
+        void _from_block_array(PtrArr ptr) noexcept
+        {
+            for (size_t i = 0; i < m_storage_size; ++i)
+                m_data[i] = *ptr++;
+        }
+
+        /**
+         * Block array copy function
+         * @tparam @tparam OtherSize size of the block array
+         * @param arr Array of BlockType values to initialize the bitset with (block values).
+         */
+        template <size_t OtherSize>
+        void _from_block_array(const BlockType(&arr)[OtherSize]) noexcept
+        {
+            for (size_t i = 0; i < (std::min)(m_storage_size, OtherSize); ++i)
+                m_data[i] = arr[i];
+            for (size_t i = OtherSize; i < m_storage_size; ++i)
+                m_data[i] = 0;
+        }
+
+        /**
+         * Block stack array conversion constructor with different size and block type
+         * @tparam OtherBlockType Type of the block to convert from
+         * @tparam OtherSize Size of the other bitset to convert from
+         * @param arr Array of OtherBlockType values to convert from.
+         */
+        template <unsigned_integer OtherBlockType, size_t OtherSize> requires (std::convertible_to<OtherBlockType, BlockType> && !std::is_same_v<BlockType, OtherBlockType>)
+        void _from_block_array(const OtherBlockType(&arr)[OtherSize]) noexcept
+        {
+            if (sizeof(BlockType) > sizeof(OtherBlockType))
+            {
+                constexpr uint16_t diff = sizeof(BlockType) / sizeof(OtherBlockType), other_block_size = sizeof(OtherBlockType) * 8;
+
+                for (size_t i = 0; i < m_storage_size; ++i)
+                {
+                    for (size_t j = 0; j < diff; ++j)
+                    {
+                        if (i * diff + j > OtherSize)
+                        {
+                            return;
+                        }
+                        m_data[i] |= static_cast<BlockType>(arr[i * diff + j]) << j * other_block_size;
+                    }
+                }
+            }
+            else
+            {
+                constexpr uint16_t diff = sizeof(OtherBlockType) / sizeof(BlockType);
+
+                for (size_t i = 0; i < OtherSize; ++i)
+                {
+                    for (uint16_t j = 0; j < diff; ++j)
+                    {
+                        if (i * diff + j > m_storage_size)
+                        {
+                            return;
+                        }
+                        m_data[i * diff + j] = arr[i] >> j % diff * m_block_size;
+                    }
+                }
+            }
+        }
+
+        /**
+         * Block stack pointer array conversion function with different block type and size
+         * @tparam PtrArr Type of the block pointer array [don't use]
+         * @tparam Elem Type of elem in the block pointer array [don't use]
+         * @param ptr Pointer to array of BlockType values to initialize the bitset with (block values). It's size must be >= storage_size()
+         */
+        template <typename PtrArr, unsigned_integer Elem = std::remove_cvref_t<std::remove_pointer_t<std::remove_cvref_t<PtrArr>>>> requires (std::convertible_to<Elem, BlockType>&& std::convertible_to<BlockType, Elem> && !std::is_same_v<BlockType, Elem>&& std::is_pointer_v<PtrArr> && !std::is_array_v<PtrArr> && !std::is_same_v<bool, Elem>)
+        void _from_block_array(PtrArr const& ptr) noexcept
+        {
+            if (sizeof(BlockType) > sizeof(Elem))
+            {
+                constexpr uint16_t diff = sizeof(BlockType) / sizeof(Elem), other_block_size = sizeof(Elem) * 8;
+
+                for (size_t i = 0; i < m_storage_size; ++i)
+                {
+                    for (size_t j = 0; j < diff; ++j)
+                        m_data[i] |= static_cast<BlockType>(*(ptr + i * diff + j)) << j * other_block_size;
+                }
+            }
+            else
+            {
+                constexpr uint16_t diff = sizeof(Elem) / sizeof(BlockType);
+
+                for (size_t i = 0; i < m_storage_size; ++i)
+                {
+                    for (uint16_t j = 0; j < diff; ++j)
+                        m_data[i * diff + j] = *(ptr + i) >> j % diff * m_block_size;
+                }
+            }
+        }
+
+        /**
+         * C string stack array to bitset conversion function
+         * @tparam Elem Type of the character array
+         * @tparam StrSize Size of the character array
+         * @param c_str Array c string to fill the bitset with (must be null-terminated)
+         * @param set_chr Character that represents set bits
+         */
+        template <char_type Elem, size_t StrSize>
+        void _from_c_string(const Elem(&c_str)[StrSize], const Elem& set_chr = '1') noexcept
+        {
+            for (size_t i = 0; i < m_storage_size; ++i)
+            {
+                for (uint16_t j = 0; j < m_block_size; ++j)
+                {
+                    if (!c_str[i * m_block_size + j])
+                    {
+                        return;
+                    }
+                    m_data[i] |= c_str[i * m_block_size + j] == set_chr ? BlockType{ 1 } << j : 0;
+                }
+            }
+        }
+
+        /**
+         * C string pointer array to bitset conversion function
+         * @tparam PtrArr Type of the character array [don't use]
+         * @tparam Elem Type of the character array [don't use]
+         * @param c_str Pointer to c string to fill the bitset with (must be null-terminated)
+         * @param set_chr Character that represents set bits
+         */
+        template <typename PtrArr = const char*, char_type Elem = std::remove_cvref_t<std::remove_pointer_t<std::remove_cvref_t<PtrArr>>>> requires (std::is_pointer_v<PtrArr> && !std::is_array_v<PtrArr>)
+        void _from_c_string(PtrArr c_str, const Elem& set_chr = '1') noexcept
+        {
+            for (size_t i = 0; i < m_storage_size; ++i)
+            {
+                for (uint16_t j = 0; j < m_block_size; ++j)
+                {
+                    if (!*c_str)
+                    {
+                        return;
+                    }
+                    m_data[i] |= *c_str++ == set_chr ? BlockType{ 1 } << j : 0;
+                }
+            }
+        }
+
+    public:
 
         /**
          * bitset to C string conversion function
@@ -5305,6 +5129,56 @@ namespace woj
             return result;
         }
 
+    private:
+
+        /**
+         * Bool array to bitset conversion function
+         * @tparam OtherSize Size of the bool array to copy from
+         * @param arr Bool array containing the values to convert from (bit values).
+         */
+        template <uint64_t OtherSize>
+        void _from_bool_array(const bool(&arr)[OtherSize]) noexcept
+        {
+            for (size_t i = 0; i < m_storage_size - !!m_partial_size; ++i)
+            {
+                for (uint16_t j = 0; j < m_block_size; ++j)
+                {
+                    if (i * m_block_size + j >= OtherSize)
+                    {
+                        return;
+                    }
+                    m_data[i] |= arr[i * m_block_size + j] << j;
+                }
+            }
+            if (m_partial_size)
+            {
+                for (uint16_t j = 0; j < m_partial_size; ++j)
+                    m_data[m_storage_size - 1] |= static_cast<BlockType>(arr[m_storage_size - !!m_partial_size * m_block_size + j]) << j;
+            }
+        }
+
+        /**
+         * Bool pointer array to bitset conversion function
+         * @tparam PtrArr Used to constrain type to const bool* [don't use]
+         * @param ptr Pointer to the bool array containing the values to initialize the bitset with (bit values). It's size must be >= size()
+         */
+        template <typename PtrArr = const bool*> requires (std::is_pointer_v<PtrArr> && !std::is_array_v<PtrArr>&& std::is_same_v<const bool*, PtrArr> && !std::is_same_v<std::remove_cvref_t<BlockType>, bool*>)
+        void _from_bool_array(PtrArr ptr) noexcept
+        {
+            for (size_t i = 0; i < m_storage_size - !!m_partial_size; ++i)
+            {
+                for (uint16_t j = 0; j < m_block_size; ++j)
+                    m_data[i] |= *ptr++ << j;
+            }
+            if (m_partial_size)
+            {
+                for (uint16_t j = 0; j < m_partial_size; ++j)
+                    m_data[m_storage_size - 1] |= static_cast<BlockType>(*ptr++) << j;
+            }
+        }
+
+    public:
+
         /**
          * bitset to bool array conversion function
          * @return Pointer to array of booleans containing the bit values (size of the array == m_size template parameter)
@@ -5326,101 +5200,77 @@ namespace woj
             return result;
         }
 
-        /**
-         * bitset to block array conversion function [or basically copy m_data]
-         * @return Array of block values (size of the array == storage_size())
-         */
-        [[nodiscard]] BlockType* to_block_array() const noexcept
-        {
-            BlockType result = new BlockType[m_storage_size];
-            std::copy(m_data, m_data + m_storage_size, result);
-            return result;
-        }
+    private:
 
         /**
-         * bitset to bool pointer array conversion function
-         * @tparam T Type of the container to convert to [must have fixed size equal to m_size, value_type equal to bool, support iterator]
-         * @return Container provided, containing bool(bit) values.
+         * Bool container to bitset conversion function
+         * @tparam T Type of the container to convert from [value_type equal to bool, support const_iterator]
+         * @param cont Container containing bool values to convert from
          */
-        template <fixed_has_read_write_iterator T> requires fixed_has_read_write_iterator<T>&& std::is_same_v<bool, typename T::value_type>
-        [[nodiscard]] T to_fixed_bool_container() const noexcept
+        template <has_read_iterator T> requires std::is_same_v<bool, typename T::value_type>
+        void _from_bool_container(const T& cont) noexcept
         {
-            T result;
-
-            typename T::iterator it = result.begin();
-
-            for (size_t i = 0; i < m_storage_size - !!m_partial_size; ++i)
-            {
-                for (uint16_t j = 0; j < m_block_size; ++j)
-                    *it++ = m_data[i] & BlockType{ 1 } << j;
-            }
-            if (m_partial_size)
-            {
-                for (size_t i = 0; i < m_partial_size; ++i)
-                    *it++ = m_data[i] & BlockType{ 1 } << i;
-            }
-            return result;
-        }
-
-        /**
-         * bitset to bool dynamic container conversion function
-         * @tparam T Type of the container to convert to [must have dynamic size, constructor that takes 1 argument of type size_t [size of the container], value_type equal to bool, support iterator]
-         * @return Container provided, containing bool(bit) values.
-         */
-        template <dynamic_has_read_write_iterator T> requires std::is_same_v<bool, typename T::value_type>
-        [[nodiscard]] T to_dynamic_bool_container() const noexcept
-        {
-            T result(m_size);
-
-            typename T::iterator it = result.begin();
-
-            for (size_t i = 0; i < m_storage_size - !!m_partial_size; ++i)
-            {
-                for (uint16_t j = 0; j < m_block_size; ++j)
-                    *it++ = m_data[i] & BlockType{ 1 } << j;
-            }
-            if (m_partial_size)
-            {
-                for (size_t i = 0; i < m_partial_size; ++i)
-                    *it++ = m_data[i] & BlockType{ 1 } << i;
-            }
-            return result;
-        }
-
-        /**
-         * bitset to block fixed container conversion function
-         * @tparam T Type of the container to convert to [must have fixed size equal to m_size, value_type equal to BlockType, support iterator]
-         * @return Container provided, containing block values.
-         */
-        template <fixed_has_read_write_iterator T> requires std::is_same_v<BlockType, typename T::value_type>
-        [[nodiscard]] T to_fixed_block_container() const noexcept
-        {
-            T result;
-
-            typename T::iterator it = result.begin();
+            typename T::const_iterator it = cont.cbegin();
 
             for (size_t i = 0; i < m_storage_size; ++i)
-                *it++ = m_data[i];
-
-            return result;
+            {
+                for (size_t j = 0; j < m_block_size; ++j)
+                {
+                    if (it == cont.cend())
+                    {
+                        return;
+                    }
+                    m_data[i] |= static_cast<BlockType>(*it++) << j;
+                }
+            }
         }
 
         /**
-         * bitset to block dynamic container conversion function
-         * @tparam T Type of the container to convert to [must have dynamic size, constructor that takes 1 argument of type size_t [size of the container], value_type equal to BlockType, support iterator]
-         * @return Container provided, containing block values.
+         * Bool container to bitset conversion function
+         * @tparam T Type of the container to convert from [value_type equal to bool, support read bracket operator]
+         * @param cont Container containing bool values to convert from
          */
-        template <dynamic_has_read_write_iterator T> requires std::is_same_v<BlockType, typename T::value_type>
-        [[nodiscard]] T to_dynamic_block_container() const noexcept
+        template <has_read_bracket_operator T> requires (std::is_same_v<bool, typename T::value_type> && !has_read_iterator<T>)
+        void _from_bool_container(const T& cont) noexcept
         {
-            T result(m_size);
-
-            typename T::iterator it = result.begin();
+            typename T::const_iterator it = cont.cbegin();
 
             for (size_t i = 0; i < m_storage_size; ++i)
-                *it++ = m_data[i];
+            {
+                for (size_t j = 0; j < m_block_size; ++j)
+                {
+                    if (it == cont.cend())
+                    {
+                        return;
+                    }
+                    m_data[i] |= static_cast<BlockType>(*it++) << j;
+                }
+            }
+        }
 
-            return result;
+    public:
+
+        /**
+         * integral value to bitset conversion function
+         * @tparam T Type of the integral value to convert from
+         * @param value Value to convert from
+         */
+        template <unsigned_integer T>
+        void from_integer(const T& value) noexcept
+        {
+            clear();
+            if (sizeof(T) <= sizeof(BlockType))
+            {
+                m_data[0] = m_data[0] & ~static_cast<BlockType>((std::numeric_limits<T>::max)()) | value;
+                return;
+            }
+
+            constexpr uint16_t diff = sizeof(T) / sizeof(BlockType);
+
+            for (uint16_t i = 0; i < diff; ++i)
+            {
+                m_data[i] = value >> i * m_block_size;
+            }
         }
 
         /**
@@ -5440,30 +5290,6 @@ namespace woj
                 result |= static_cast<T>(m_data[i]) << i * m_block_size;
 
             return result;
-        }
-
-        /**
-         * integral value to bitset conversion function
-         * @tparam T Type of the integral value to convert from
-         * @param value Value to convert from
-         */
-        template <unsigned_integer T>
-        void from_integer(const T& value) noexcept
-        {
-            ::memset(m_data, 0, m_storage_size * sizeof(BlockType));
-
-            if (sizeof(T) <= sizeof(BlockType))
-            {
-                m_data[0] = m_data[0] & ~BlockType{ (std::numeric_limits<T>::max)() } | value;
-                return;
-            }
-
-            constexpr uint16_t diff = sizeof(T) / sizeof(BlockType);
-
-            for (uint16_t i = 0; i < diff; ++i)
-            {
-                m_data[i] = value >> i * m_block_size;
-            }
         }
 
         // Utility functions
